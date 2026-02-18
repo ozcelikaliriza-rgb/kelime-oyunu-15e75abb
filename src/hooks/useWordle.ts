@@ -182,16 +182,30 @@ export function useWordle() {
 
   const useHint = useCallback(() => {
     if (hintsRemaining <= 0 || !targetWord) return;
-    // Find unrevealed indices
-    const unrevealed: number[] = [];
-    for (let i = 0; i < targetWord.length; i++) {
-      if (!revealedIndices.has(i)) unrevealed.push(i);
+    // Collect positions already correct from previous guesses
+    const correctFromGuesses = new Set<number>();
+    if (guesses.length > 0) {
+      const lastGuess = guesses[guesses.length - 1];
+      for (let i = 0; i < lastGuess.length; i++) {
+        if (lastGuess[i].state === "correct") correctFromGuesses.add(i);
+      }
+      // Check all guesses for correct positions
+      for (const g of guesses) {
+        for (let i = 0; i < g.length; i++) {
+          if (g[i].state === "correct") correctFromGuesses.add(i);
+        }
+      }
     }
-    if (unrevealed.length === 0) return;
-    const idx = unrevealed[Math.floor(Math.random() * unrevealed.length)];
+    // Only pick from positions not yet correct and not already revealed
+    const candidates: number[] = [];
+    for (let i = 0; i < targetWord.length; i++) {
+      if (!revealedIndices.has(i) && !correctFromGuesses.has(i)) candidates.push(i);
+    }
+    if (candidates.length === 0) return;
+    const idx = candidates[Math.floor(Math.random() * candidates.length)];
     setRevealedIndices((prev) => new Set(prev).add(idx));
     setHintsRemaining((h) => h - 1);
-  }, [hintsRemaining, targetWord, revealedIndices]);
+  }, [hintsRemaining, targetWord, revealedIndices, guesses]);
 
   const addLetter = useCallback(
     (letter: string) => {
