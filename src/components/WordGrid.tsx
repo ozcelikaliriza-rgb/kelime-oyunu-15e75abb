@@ -51,10 +51,10 @@ export default function WordGrid({ guesses, currentGuess, wordLength, maxAttempt
         >
           {row.map((tile, ci) => {
             const sizeClass = wordLength >= 7
-              ? "w-[36px] h-[36px] text-sm sm:w-[44px] sm:h-[44px] sm:text-base"
+              ? "w-[38px] h-[38px] text-sm sm:w-[46px] sm:h-[46px] sm:text-base"
               : wordLength >= 6
-              ? "w-[40px] h-[40px] text-base sm:w-[48px] sm:h-[48px] sm:text-lg"
-              : "w-[44px] h-[44px] text-lg sm:w-[52px] sm:h-[52px] sm:text-xl";
+              ? "w-[42px] h-[42px] text-base sm:w-[50px] sm:h-[50px] sm:text-lg"
+              : "w-[48px] h-[48px] text-lg sm:w-[56px] sm:h-[56px] sm:text-xl";
             return (
               <div
                 key={ci}
