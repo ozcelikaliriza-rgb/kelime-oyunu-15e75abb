@@ -104,6 +104,33 @@ All colors MUST be HSL.
   }
 }
 
+/* Wordle feedback colors — default */
+:root {
+  --tile-correct: 142 71% 45%;
+  --tile-present: 45 93% 47%;
+  --tile-absent: 215 14% 27%;
+}
+.dark {
+  --tile-absent: 215 14% 40%;
+}
+
+/* Color blind mode overrides */
+.colorblind {
+  --tile-correct: 24 95% 53%;   /* orange */
+  --tile-present: 210 79% 46%;  /* blue */
+  --tile-absent: 30 10% 30%;    /* brown-grey */
+}
+.colorblind.dark {
+  --tile-correct: 24 95% 58%;
+  --tile-present: 210 79% 56%;
+  --tile-absent: 30 10% 45%;
+}
+
+/* Transitions for theme switching */
+body, .theme-transition {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
   20% { transform: translateX(-4px); }

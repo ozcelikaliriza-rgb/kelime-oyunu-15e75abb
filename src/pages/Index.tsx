@@ -1,8 +1,11 @@
 import { useEffect } from "react";
 import { useWordle, trUpper } from "@/hooks/useWordle";
+import { useTheme } from "@/hooks/useTheme";
+import { useAccessibility } from "@/hooks/useAccessibility";
 import WordGrid from "@/components/WordGrid";
 import Keyboard from "@/components/Keyboard";
-import { Lightbulb, Timer } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
+import { Lightbulb, Timer, Eye } from "lucide-react";
 
 const formatTime = (s: number) => {
   const m = Math.floor(s / 60);
@@ -12,6 +15,8 @@ const formatTime = (s: number) => {
 
 const Index = () => {
   const game = useWordle();
+  const { mode, cycleTheme } = useTheme();
+  const { colorBlind, toggleColorBlind } = useAccessibility();
 
   // Auto-focus for immediate typing
   useEffect(() => {
@@ -44,6 +49,20 @@ const Index = () => {
   if (!game.gameStarted) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 gap-6">
+        {/* Theme & accessibility toggles */}
+        <div className="absolute top-3 right-3 flex items-center gap-1.5">
+          <button
+            onClick={toggleColorBlind}
+            title="Renk körlüğü modu"
+            className={`flex items-center justify-center w-7 h-7 rounded-md border transition-colors ${
+              colorBlind ? "bg-foreground text-background border-foreground" : "bg-secondary text-secondary-foreground border-border hover:bg-muted"
+            }`}
+          >
+            <Eye className="w-4 h-4" />
+          </button>
+          <ThemeToggle mode={mode} onCycle={cycleTheme} />
+        </div>
+
         <div className="flex flex-col items-center gap-2">
           <h1 className="text-3xl font-extrabold tracking-tight text-foreground">Türkçe Wordle</h1>
           <p className="text-sm text-muted-foreground text-center max-w-xs">4'ten 8'e kadar harfli kelimeleri tahmin et!</p>
@@ -108,7 +127,7 @@ const Index = () => {
                   key={l}
                   className={`w-1.5 h-1.5 rounded-full border transition-colors ${
                     i < game.currentLevelIndex
-                      ? "bg-[hsl(142,71%,45%)] border-[hsl(142,71%,45%)]"
+                      ? "bg-[hsl(var(--tile-correct))] border-[hsl(var(--tile-correct))]"
                       : i === game.currentLevelIndex
                       ? "bg-foreground border-foreground"
                       : "bg-background border-border"
@@ -118,7 +137,7 @@ const Index = () => {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {game.hintsRemaining > 0 && (
             <button
               onClick={game.useHint}
@@ -132,6 +151,16 @@ const Index = () => {
             <Timer className="w-3 h-3" />
             {formatTime(game.elapsedSeconds)}
           </span>
+          <button
+            onClick={toggleColorBlind}
+            title="Renk körlüğü modu"
+            className={`flex items-center justify-center w-6 h-6 rounded border transition-colors ${
+              colorBlind ? "bg-foreground text-background border-foreground" : "bg-secondary text-secondary-foreground border-border hover:bg-muted"
+            }`}
+          >
+            <Eye className="w-3 h-3" />
+          </button>
+          <ThemeToggle mode={mode} onCycle={cycleTheme} />
         </div>
       </header>
 
@@ -151,6 +180,7 @@ const Index = () => {
           bounceRow={game.bounceRow}
           revealedIndices={game.revealedIndices}
           targetWord={game.targetWord}
+          colorBlind={colorBlind}
         />
       </div>
 
@@ -163,7 +193,6 @@ const Index = () => {
           onBackspace={game.removeLetter}
         />
       </div>
-
     </div>
   );
 };

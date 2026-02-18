@@ -1,5 +1,6 @@
 import { TileData } from "@/hooks/useWordle";
 import { cn } from "@/lib/utils";
+import { Check, Circle, Minus } from "lucide-react";
 
 interface WordGridProps {
   guesses: TileData[][];
@@ -10,21 +11,28 @@ interface WordGridProps {
   bounceRow: number | null;
   revealedIndices: Set<number>;
   targetWord: string;
+  colorBlind?: boolean;
 }
 
 const stateStyles: Record<string, string> = {
-  correct: "bg-[hsl(142,71%,45%)] border-[hsl(142,71%,45%)] text-white",
-  present: "bg-[hsl(45,93%,47%)] border-[hsl(45,93%,47%)] text-white",
-  absent: "bg-[hsl(215,14%,27%)] border-[hsl(215,14%,27%)] text-white",
+  correct: "bg-[hsl(var(--tile-correct))] border-[hsl(var(--tile-correct))] text-white",
+  present: "bg-[hsl(var(--tile-present))] border-[hsl(var(--tile-present))] text-white",
+  absent: "bg-[hsl(var(--tile-absent))] border-[hsl(var(--tile-absent))] text-white",
   empty: "bg-background border-border",
 };
 
-export default function WordGrid({ guesses, currentGuess, wordLength, maxAttempts, shake, bounceRow, revealedIndices, targetWord }: WordGridProps) {
+function CbIcon({ state }: { state: string }) {
+  if (state === "correct") return <Check className="w-2.5 h-2.5 absolute bottom-0.5 right-0.5 opacity-80" />;
+  if (state === "present") return <Circle className="w-2 h-2 absolute bottom-0.5 right-0.5 opacity-80" />;
+  if (state === "absent") return <Minus className="w-2.5 h-2.5 absolute bottom-0.5 right-0.5 opacity-80" />;
+  return null;
+}
+
+export default function WordGrid({ guesses, currentGuess, wordLength, maxAttempts, shake, bounceRow, revealedIndices, targetWord, colorBlind }: WordGridProps) {
   const rows: TileData[][] = [];
 
   for (const g of guesses) rows.push(g);
 
-  // Current guess row with hints
   if (rows.length < maxAttempts) {
     const current: TileData[] = [];
     for (let i = 0; i < wordLength; i++) {
@@ -59,15 +67,16 @@ export default function WordGrid({ guesses, currentGuess, wordLength, maxAttempt
             return (
               <div
                 key={ci}
-                 style={bounceRow === ri ? { animationDelay: `${ci * 80}ms` } : undefined}
-                 className={cn(
-                   "flex items-center justify-center border-2 font-bold uppercase transition-colors duration-300",
-                   sizeClass,
-                   stateStyles[tile.state],
-                   bounceRow === ri && "animate-bounce-cell"
-                 )}
+                style={bounceRow === ri ? { animationDelay: `${ci * 80}ms` } : undefined}
+                className={cn(
+                  "relative flex items-center justify-center border-2 font-bold uppercase transition-colors duration-300",
+                  sizeClass,
+                  stateStyles[tile.state],
+                  bounceRow === ri && "animate-bounce-cell"
+                )}
               >
                 {tile.letter}
+                {colorBlind && tile.state !== "empty" && <CbIcon state={tile.state} />}
               </div>
             );
           })}

@@ -9,9 +9,9 @@ const ROWS = [
 ];
 
 const keyStateStyles: Record<string, string> = {
-  correct: "bg-[#22C55E] text-white border-[#22C55E]",
-  present: "bg-[#EAB308] text-white border-[#EAB308]",
-  absent: "bg-[#374151] text-white border-[#374151]",
+  correct: "bg-[hsl(var(--tile-correct))] text-white border-[hsl(var(--tile-correct))]",
+  present: "bg-[hsl(var(--tile-present))] text-white border-[hsl(var(--tile-present))]",
+  absent: "bg-[hsl(var(--tile-absent))] text-white border-[hsl(var(--tile-absent))]",
 };
 
 interface KeyboardProps {
