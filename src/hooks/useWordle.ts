@@ -23,6 +23,7 @@ export const trUpper = (s: string) => s.toLocaleUpperCase("tr-TR");
 export function useWordle() {
   const [wordLists, setWordLists] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
+  const [gameStarted, setGameStarted] = useState(false);
   const [currentLevelIndex, setCurrentLevelIndex] = useState(0);
   const [targetWord, setTargetWord] = useState("");
   const [guesses, setGuesses] = useState<TileData[][]>([]);
@@ -55,7 +56,6 @@ export function useWordle() {
         const list = data[String(LEVELS[0])] as string[];
         const word = trUpper(list[Math.floor(Math.random() * list.length)]);
         setTargetWord(word);
-        setTimerRunning(true);
         setLoading(false);
       });
   }, []);
@@ -153,33 +153,15 @@ export function useWordle() {
       }
     } else if (newGuesses.length >= MAX_ATTEMPTS) {
       setResults((r) => [...r, { level: wordLength, attempts: MAX_ATTEMPTS, solved: false }]);
-      setTimeout(() => setLevelFailed(true), 800);
+      setTimerRunning(false);
+      setTimeout(() => setGameOver(true), 800);
     }
   }, [currentGuess, wordLength, wordLists, evaluateGuess, guesses, letterStates, targetWord, currentLevelIndex, pickWord]);
 
-  const nextLevel = useCallback(() => {
-    const next = currentLevelIndex + 1;
-    const nextLen = LEVELS[next];
-    setCurrentLevelIndex(next);
-    setTargetWord(pickWord(next));
-    setGuesses([]);
-    setCurrentGuess("");
-    setLetterStates({});
-    setLevelComplete(false);
-    setLevelFailed(false);
-    setRevealedIndices(new Set());
-    setHintsRemaining(HINTS_PER_LEVEL[nextLen] || 0);
-  }, [currentLevelIndex, pickWord]);
-
-  const retryLevel = useCallback(() => {
-    setTargetWord(pickWord(currentLevelIndex));
-    setGuesses([]);
-    setCurrentGuess("");
-    setLetterStates({});
-    setLevelFailed(false);
-    setRevealedIndices(new Set());
-    setHintsRemaining(HINTS_PER_LEVEL[wordLength] || 0);
-  }, [currentLevelIndex, pickWord, wordLength]);
+  const startGame = useCallback(() => {
+    setGameStarted(true);
+    setTimerRunning(true);
+  }, []);
 
   const restartGame = useCallback(() => {
     setCurrentLevelIndex(0);
@@ -194,6 +176,7 @@ export function useWordle() {
     setRevealedIndices(new Set());
     setHintsRemaining(0);
     setElapsedSeconds(0);
+    setGameStarted(true);
     setTimerRunning(true);
   }, [pickWord]);
 
@@ -225,6 +208,7 @@ export function useWordle() {
 
   return {
     loading,
+    gameStarted,
     wordLength,
     currentLevelIndex,
     guesses,
@@ -246,8 +230,7 @@ export function useWordle() {
     addLetter,
     removeLetter,
     submitGuess,
-    nextLevel,
-    retryLevel,
+    startGame,
     restartGame,
     useHint,
   };
