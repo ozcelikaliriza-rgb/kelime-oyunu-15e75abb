@@ -29,9 +29,9 @@ export default function Keyboard({ letterStates, onKey, onEnter, onBackspace }: 
   };
 
   return (
-    <div className="flex flex-col items-center gap-1.5 w-full max-w-lg mx-auto">
+    <div className="flex flex-col items-center gap-1 w-full max-w-lg mx-auto">
       {ROWS.map((row, ri) => (
-        <div key={ri} className="flex gap-1 justify-center w-full">
+        <div key={ri} className="flex gap-0.5 sm:gap-1 justify-center w-full">
           {row.map((key) => {
             const isSpecial = key === "ENTER" || key === "⌫";
             const state = letterStates[key];
@@ -42,12 +42,12 @@ export default function Keyboard({ letterStates, onKey, onEnter, onBackspace }: 
                 className={cn(
                   "flex items-center justify-center rounded font-bold border-2 transition-colors duration-200 select-none",
                   isSpecial
-                    ? "px-2 sm:px-4 h-12 sm:h-14 text-xs sm:text-sm bg-gray-200 border-gray-200 text-foreground min-w-[48px] sm:min-w-[64px]"
-                    : "w-[30px] sm:w-[40px] h-12 sm:h-14 text-sm sm:text-base bg-gray-100 border-gray-200 text-foreground",
+                    ? "px-1.5 sm:px-3 h-10 sm:h-12 text-[10px] sm:text-xs bg-secondary border-secondary text-secondary-foreground min-w-[40px] sm:min-w-[56px]"
+                    : "w-[28px] sm:w-[36px] h-10 sm:h-12 text-xs sm:text-sm bg-secondary border-secondary text-secondary-foreground",
                   state && keyStateStyles[state]
                 )}
               >
-                {key === "⌫" ? <Delete className="w-5 h-5" /> : key}
+                {key === "⌫" ? <Delete className="w-4 h-4" /> : key}
               </button>
             );
           })}

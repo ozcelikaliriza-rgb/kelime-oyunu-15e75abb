@@ -39,23 +39,32 @@ export default function WordGrid({ guesses, currentGuess, wordLength, maxAttempt
   const currentRowIndex = guesses.length;
 
   return (
-    <div className="flex flex-col items-center gap-1.5">
+    <div className="flex flex-col items-center gap-1">
       {rows.map((row, ri) => (
         <div
           key={ri}
-          className={cn("flex gap-1.5", ri === currentRowIndex && shake && "animate-shake")}
+          className={cn("flex gap-1", ri === currentRowIndex && shake && "animate-shake")}
         >
-          {row.map((tile, ci) => (
-            <div
-              key={ci}
-              className={cn(
-                "flex items-center justify-center w-[52px] h-[52px] sm:w-[60px] sm:h-[60px] border-2 text-xl sm:text-2xl font-bold uppercase transition-colors duration-300",
-                stateStyles[tile.state]
-              )}
-            >
-              {tile.letter}
-            </div>
-          ))}
+          {row.map((tile, ci) => {
+            // Dynamic tile size based on word length
+            const sizeClass = wordLength >= 7
+              ? "w-[40px] h-[40px] text-base sm:w-[48px] sm:h-[48px] sm:text-lg"
+              : wordLength >= 6
+              ? "w-[44px] h-[44px] text-lg sm:w-[52px] sm:h-[52px] sm:text-xl"
+              : "w-[48px] h-[48px] text-xl sm:w-[56px] sm:h-[56px] sm:text-2xl";
+            return (
+              <div
+                key={ci}
+                className={cn(
+                  "flex items-center justify-center border-2 font-bold uppercase transition-colors duration-300",
+                  sizeClass,
+                  stateStyles[tile.state]
+                )}
+              >
+                {tile.letter}
+              </div>
+            );
+          })}
         </div>
       ))}
     </div>
