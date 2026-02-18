@@ -66,9 +66,9 @@ const Index = () => {
   }
 
   return (
-    <div className="flex min-h-[100dvh] flex-col items-center bg-background px-1 py-1">
+    <div className="flex h-[100dvh] flex-col items-center bg-background px-1 py-0 overflow-hidden">
       {/* Header */}
-      <header className="flex items-center justify-between w-full max-w-lg px-1 mb-0.5">
+      <header className="flex items-center justify-between w-full max-w-lg px-2 pt-1 pb-0">
         <div className="flex flex-col">
           <h1 className="text-base sm:text-lg font-bold tracking-tight text-foreground leading-tight">Türkçe Wordle</h1>
           <div className="flex items-center gap-1.5">
@@ -114,7 +114,7 @@ const Index = () => {
       )}
 
       {/* Grid */}
-      <div className="flex-1 flex items-center py-0.5">
+      <div className="flex-1 flex items-center justify-center min-h-0">
         <WordGrid
           guesses={game.guesses}
           currentGuess={game.currentGuess}
@@ -127,7 +127,7 @@ const Index = () => {
       </div>
 
       {/* Keyboard */}
-      <div className="w-full pb-0.5">
+      <div className="w-full pb-1 pt-0.5">
         <Keyboard
           letterStates={game.letterStates}
           onKey={game.addLetter}
