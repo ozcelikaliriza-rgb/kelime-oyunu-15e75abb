@@ -16,6 +16,9 @@ export interface LevelResult {
 const MAX_ATTEMPTS = 6;
 const LEVELS = [4, 5, 6, 7, 8];
 
+/** Turkish-aware uppercase */
+export const trUpper = (s: string) => s.toLocaleUpperCase("tr-TR");
+
 export function useWordle() {
   const [wordLists, setWordLists] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
@@ -37,7 +40,6 @@ export function useWordle() {
     fetch("/words.json")
       .then((r) => r.text())
       .then((text) => {
-        // Handle double-encoded JSON (outer quotes + escaped inner quotes + literal newlines)
         let clean = text.trim();
         if (clean.startsWith('"') && clean.endsWith('"')) {
           clean = clean.slice(1, -1).replace(/\\"/g, '"').replace(/\\n/g, "\n");
@@ -45,7 +47,7 @@ export function useWordle() {
         const data = JSON.parse(clean);
         setWordLists(data);
         const list = data[String(LEVELS[0])] as string[];
-        const word = list[Math.floor(Math.random() * list.length)].toUpperCase();
+        const word = trUpper(list[Math.floor(Math.random() * list.length)]);
         setTargetWord(word);
         setLoading(false);
       });
@@ -55,7 +57,7 @@ export function useWordle() {
     (levelIdx: number) => {
       const len = LEVELS[levelIdx];
       const list = wordLists[String(len)] || [];
-      return list[Math.floor(Math.random() * list.length)].toUpperCase();
+      return trUpper(list[Math.floor(Math.random() * list.length)]);
     },
     [wordLists]
   );
@@ -90,7 +92,7 @@ export function useWordle() {
   const submitGuess = useCallback(() => {
     if (currentGuess.length !== wordLength) return;
 
-    const list = (wordLists[String(wordLength)] || []).map((w: string) => w.toUpperCase());
+    const list = (wordLists[String(wordLength)] || []).map((w: string) => trUpper(w));
     if (!list.includes(currentGuess)) {
       setShake(true);
       setInvalidWord(true);
@@ -102,7 +104,6 @@ export function useWordle() {
     const newGuesses = [...guesses, evaluated];
     setGuesses(newGuesses);
 
-    // Update keyboard letter states
     const newStates = { ...letterStates };
     evaluated.forEach(({ letter, state }) => {
       const prev = newStates[letter];
@@ -117,15 +118,23 @@ export function useWordle() {
     if (won) {
       setResults((r) => [...r, { level: wordLength, attempts: newGuesses.length, solved: true }]);
       if (currentLevelIndex === LEVELS.length - 1) {
-        setTimeout(() => setGameOver(true), 800);
+        setTimeout(() => setGameOver(true), 1000);
       } else {
-        setTimeout(() => setLevelComplete(true), 800);
+        // Auto-advance to next level after 1 second
+        setTimeout(() => {
+          const next = currentLevelIndex + 1;
+          setCurrentLevelIndex(next);
+          setTargetWord(pickWord(next));
+          setGuesses([]);
+          setCurrentGuess("");
+          setLetterStates({});
+        }, 1000);
       }
     } else if (newGuesses.length >= MAX_ATTEMPTS) {
       setResults((r) => [...r, { level: wordLength, attempts: MAX_ATTEMPTS, solved: false }]);
       setTimeout(() => setLevelFailed(true), 800);
     }
-  }, [currentGuess, wordLength, wordLists, evaluateGuess, guesses, letterStates, targetWord, currentLevelIndex]);
+  }, [currentGuess, wordLength, wordLists, evaluateGuess, guesses, letterStates, targetWord, currentLevelIndex, pickWord]);
 
   const nextLevel = useCallback(() => {
     const next = currentLevelIndex + 1;
