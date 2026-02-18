@@ -7,6 +7,7 @@ interface WordGridProps {
   wordLength: number;
   maxAttempts: number;
   shake: boolean;
+  bounceRow: number | null;
   revealedIndices: Set<number>;
   targetWord: string;
 }
@@ -18,7 +19,7 @@ const stateStyles: Record<string, string> = {
   empty: "bg-background border-border",
 };
 
-export default function WordGrid({ guesses, currentGuess, wordLength, maxAttempts, shake, revealedIndices, targetWord }: WordGridProps) {
+export default function WordGrid({ guesses, currentGuess, wordLength, maxAttempts, shake, bounceRow, revealedIndices, targetWord }: WordGridProps) {
   const rows: TileData[][] = [];
 
   for (const g of guesses) rows.push(g);
@@ -58,11 +59,13 @@ export default function WordGrid({ guesses, currentGuess, wordLength, maxAttempt
             return (
               <div
                 key={ci}
-                className={cn(
-                  "flex items-center justify-center border-2 font-bold uppercase transition-colors duration-300",
-                  sizeClass,
-                  stateStyles[tile.state]
-                )}
+                 style={bounceRow === ri ? { animationDelay: `${ci * 80}ms` } : undefined}
+                 className={cn(
+                   "flex items-center justify-center border-2 font-bold uppercase transition-colors duration-300",
+                   sizeClass,
+                   stateStyles[tile.state],
+                   bounceRow === ri && "animate-bounce-cell"
+                 )}
               >
                 {tile.letter}
               </div>

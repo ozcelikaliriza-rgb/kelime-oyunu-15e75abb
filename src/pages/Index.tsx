@@ -14,6 +14,11 @@ const formatTime = (s: number) => {
 const Index = () => {
   const game = useWordle();
 
+  // Auto-focus for immediate typing
+  useEffect(() => {
+    window.focus();
+  }, [game.currentLevelIndex]);
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
@@ -121,6 +126,7 @@ const Index = () => {
           wordLength={game.wordLength}
           maxAttempts={game.maxAttempts}
           shake={game.shake}
+          bounceRow={game.bounceRow}
           revealedIndices={game.revealedIndices}
           targetWord={game.targetWord}
         />
