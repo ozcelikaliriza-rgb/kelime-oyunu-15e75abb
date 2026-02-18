@@ -15,6 +15,7 @@ export interface LevelResult {
 
 const MAX_ATTEMPTS = 6;
 const LEVELS = [4, 5, 6, 7, 8];
+const HINTS_PER_LEVEL: Record<number, number> = { 7: 1, 8: 2 };
 
 /** Turkish-aware uppercase */
 export const trUpper = (s: string) => s.toLocaleUpperCase("tr-TR");
@@ -33,6 +34,10 @@ export function useWordle() {
   const [results, setResults] = useState<LevelResult[]>([]);
   const [shake, setShake] = useState(false);
   const [invalidWord, setInvalidWord] = useState(false);
+  const [hintsRemaining, setHintsRemaining] = useState(0);
+  const [revealedIndices, setRevealedIndices] = useState<Set<number>>(new Set());
+  const [timerRunning, setTimerRunning] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   const wordLength = LEVELS[currentLevelIndex];
 
@@ -49,9 +54,17 @@ export function useWordle() {
         const list = data[String(LEVELS[0])] as string[];
         const word = trUpper(list[Math.floor(Math.random() * list.length)]);
         setTargetWord(word);
+        setTimerRunning(true);
         setLoading(false);
       });
   }, []);
+
+  // Continuous timer
+  useEffect(() => {
+    if (!timerRunning) return;
+    const interval = setInterval(() => setElapsedSeconds((s) => s + 1), 1000);
+    return () => clearInterval(interval);
+  }, [timerRunning]);
 
   const pickWord = useCallback(
     (levelIdx: number) => {
@@ -118,16 +131,20 @@ export function useWordle() {
     if (won) {
       setResults((r) => [...r, { level: wordLength, attempts: newGuesses.length, solved: true }]);
       if (currentLevelIndex === LEVELS.length - 1) {
+        setTimerRunning(false);
         setTimeout(() => setGameOver(true), 1000);
       } else {
         // Auto-advance to next level after 1 second
         setTimeout(() => {
           const next = currentLevelIndex + 1;
+          const nextLen = LEVELS[next];
           setCurrentLevelIndex(next);
           setTargetWord(pickWord(next));
           setGuesses([]);
           setCurrentGuess("");
           setLetterStates({});
+          setRevealedIndices(new Set());
+          setHintsRemaining(HINTS_PER_LEVEL[nextLen] || 0);
         }, 1000);
       }
     } else if (newGuesses.length >= MAX_ATTEMPTS) {
@@ -138,6 +155,7 @@ export function useWordle() {
 
   const nextLevel = useCallback(() => {
     const next = currentLevelIndex + 1;
+    const nextLen = LEVELS[next];
     setCurrentLevelIndex(next);
     setTargetWord(pickWord(next));
     setGuesses([]);
@@ -145,6 +163,8 @@ export function useWordle() {
     setLetterStates({});
     setLevelComplete(false);
     setLevelFailed(false);
+    setRevealedIndices(new Set());
+    setHintsRemaining(HINTS_PER_LEVEL[nextLen] || 0);
   }, [currentLevelIndex, pickWord]);
 
   const retryLevel = useCallback(() => {
@@ -153,7 +173,9 @@ export function useWordle() {
     setCurrentGuess("");
     setLetterStates({});
     setLevelFailed(false);
-  }, [currentLevelIndex, pickWord]);
+    setRevealedIndices(new Set());
+    setHintsRemaining(HINTS_PER_LEVEL[wordLength] || 0);
+  }, [currentLevelIndex, pickWord, wordLength]);
 
   const restartGame = useCallback(() => {
     setCurrentLevelIndex(0);
@@ -165,7 +187,24 @@ export function useWordle() {
     setLevelFailed(false);
     setGameOver(false);
     setResults([]);
+    setRevealedIndices(new Set());
+    setHintsRemaining(0);
+    setElapsedSeconds(0);
+    setTimerRunning(true);
   }, [pickWord]);
+
+  const useHint = useCallback(() => {
+    if (hintsRemaining <= 0 || !targetWord) return;
+    // Find unrevealed indices
+    const unrevealed: number[] = [];
+    for (let i = 0; i < targetWord.length; i++) {
+      if (!revealedIndices.has(i)) unrevealed.push(i);
+    }
+    if (unrevealed.length === 0) return;
+    const idx = unrevealed[Math.floor(Math.random() * unrevealed.length)];
+    setRevealedIndices((prev) => new Set(prev).add(idx));
+    setHintsRemaining((h) => h - 1);
+  }, [hintsRemaining, targetWord, revealedIndices]);
 
   const addLetter = useCallback(
     (letter: string) => {
@@ -196,11 +235,15 @@ export function useWordle() {
     targetWord,
     maxAttempts: MAX_ATTEMPTS,
     levels: LEVELS,
+    elapsedSeconds,
+    hintsRemaining,
+    revealedIndices,
     addLetter,
     removeLetter,
     submitGuess,
     nextLevel,
     retryLevel,
     restartGame,
+    useHint,
   };
 }
