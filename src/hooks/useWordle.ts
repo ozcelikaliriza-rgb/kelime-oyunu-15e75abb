@@ -34,6 +34,7 @@ export function useWordle() {
   const [results, setResults] = useState<LevelResult[]>([]);
   const [shake, setShake] = useState(false);
   const [invalidWord, setInvalidWord] = useState(false);
+  const [bounceRow, setBounceRow] = useState<number | null>(null);
   const [hintsRemaining, setHintsRemaining] = useState(0);
   const [revealedIndices, setRevealedIndices] = useState<Set<number>>(new Set());
   const [timerRunning, setTimerRunning] = useState(false);
@@ -109,6 +110,7 @@ export function useWordle() {
     if (!list.includes(currentGuess)) {
       setShake(true);
       setInvalidWord(true);
+      if (navigator.vibrate) navigator.vibrate(100);
       setTimeout(() => { setShake(false); setInvalidWord(false); }, 600);
       return;
     }
@@ -129,13 +131,15 @@ export function useWordle() {
 
     const won = currentGuess === targetWord;
     if (won) {
+      setBounceRow(newGuesses.length - 1);
+      if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
       setResults((r) => [...r, { level: wordLength, attempts: newGuesses.length, solved: true }]);
       if (currentLevelIndex === LEVELS.length - 1) {
         setTimerRunning(false);
-        setTimeout(() => setGameOver(true), 1000);
+        setTimeout(() => { setBounceRow(null); setGameOver(true); }, 1200);
       } else {
-        // Auto-advance to next level after 1 second
         setTimeout(() => {
+          setBounceRow(null);
           const next = currentLevelIndex + 1;
           const nextLen = LEVELS[next];
           setCurrentLevelIndex(next);
@@ -232,6 +236,7 @@ export function useWordle() {
     results,
     shake,
     invalidWord,
+    bounceRow,
     targetWord,
     maxAttempts: MAX_ATTEMPTS,
     levels: LEVELS,
