@@ -14,7 +14,7 @@ export interface LevelResult {
 }
 
 const MAX_ATTEMPTS = 6;
-const LEVELS = [3, 4, 5, 6, 7, 8];
+const LEVELS = [4, 5, 6, 7, 8];
 
 export function useWordle() {
   const [wordLists, setWordLists] = useState<Record<string, string[]>>({});
@@ -35,10 +35,16 @@ export function useWordle() {
 
   useEffect(() => {
     fetch("/words.json")
-      .then((r) => r.json())
-      .then((data) => {
+      .then((r) => r.text())
+      .then((text) => {
+        // Handle double-encoded JSON (outer quotes + escaped inner quotes + literal newlines)
+        let clean = text.trim();
+        if (clean.startsWith('"') && clean.endsWith('"')) {
+          clean = clean.slice(1, -1).replace(/\\"/g, '"').replace(/\\n/g, "\n");
+        }
+        const data = JSON.parse(clean);
         setWordLists(data);
-        const list = data["3"] as string[];
+        const list = data[String(LEVELS[0])] as string[];
         const word = list[Math.floor(Math.random() * list.length)].toUpperCase();
         setTargetWord(word);
         setLoading(false);
