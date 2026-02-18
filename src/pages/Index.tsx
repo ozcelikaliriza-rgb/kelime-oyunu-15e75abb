@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { useWordle, trUpper } from "@/hooks/useWordle";
 import WordGrid from "@/components/WordGrid";
 import Keyboard from "@/components/Keyboard";
-import { Button } from "@/components/ui/button";
 import { Lightbulb, Timer } from "lucide-react";
 
 const formatTime = (s: number) => {
@@ -42,12 +41,32 @@ const Index = () => {
     );
   }
 
+  if (!game.gameStarted) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 gap-6">
+        <div className="flex flex-col items-center gap-2">
+          <h1 className="text-3xl font-extrabold tracking-tight text-foreground">Türkçe Wordle</h1>
+          <p className="text-sm text-muted-foreground text-center max-w-xs">4'ten 8'e kadar harfli kelimeleri tahmin et!</p>
+        </div>
+        <button
+          onClick={game.startGame}
+          className="px-8 py-3 rounded-full bg-foreground text-background text-sm font-bold tracking-wide hover:opacity-90 transition-opacity"
+        >
+          Oyuna Başla
+        </button>
+      </div>
+    );
+  }
+
   if (game.gameOver) {
+    const allSolved = game.results.every((r) => r.solved);
     const totalAttempts = game.results.reduce((s, r) => s + r.attempts, 0);
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 gap-3">
-        <h1 className="text-2xl font-bold text-foreground">🎉 Tebrikler!</h1>
-        <p className="text-sm text-muted-foreground">Tüm seviyeleri tamamladın!</p>
+        <h1 className="text-2xl font-bold text-foreground">{allSolved ? "🎉 Tebrikler!" : "😞 Oyun Bitti"}</h1>
+        <p className="text-sm text-muted-foreground">
+          {allSolved ? "Tüm seviyeleri tamamladın!" : `Doğru kelime: ${game.targetWord}`}
+        </p>
         <p className="text-sm font-medium text-foreground flex items-center gap-1">
           <Timer className="w-4 h-4" /> {formatTime(game.elapsedSeconds)}
         </p>
@@ -63,9 +82,12 @@ const Index = () => {
             <span>{totalAttempts} tahmin</span>
           </div>
         </div>
-        <Button onClick={game.restartGame} size="sm" className="mt-1">
+        <button
+          onClick={game.restartGame}
+          className="mt-2 px-8 py-3 rounded-full bg-foreground text-background text-sm font-bold tracking-wide hover:opacity-90 transition-opacity"
+        >
           Tekrar Oyna
-        </Button>
+        </button>
       </div>
     );
   }
@@ -142,27 +164,6 @@ const Index = () => {
         />
       </div>
 
-      {/* Level Failed */}
-      {game.levelFailed && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-          <div className="bg-background rounded-lg p-5 max-w-sm w-[90%] flex flex-col items-center gap-2 shadow-lg border border-border">
-            <p className="text-lg font-bold text-foreground">😞 Bulamadın</p>
-            <p className="text-xs text-muted-foreground">
-              Doğru kelime: <strong className="text-foreground">{game.targetWord}</strong>
-            </p>
-            <div className="flex gap-2 w-full">
-              <Button onClick={game.retryLevel} variant="outline" size="sm" className="flex-1">
-                Tekrar Dene
-              </Button>
-              {game.currentLevelIndex < game.levels.length - 1 && (
-                <Button onClick={game.nextLevel} size="sm" className="flex-1">
-                  Sonraki →
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
