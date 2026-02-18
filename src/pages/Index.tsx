@@ -5,7 +5,7 @@ import { useAccessibility } from "@/hooks/useAccessibility";
 import WordGrid from "@/components/WordGrid";
 import Keyboard from "@/components/Keyboard";
 import ThemeToggle from "@/components/ThemeToggle";
-import { Lightbulb, Timer, Eye } from "lucide-react";
+import { Lightbulb, Timer, Eye, Share2 } from "lucide-react";
 
 const formatTime = (s: number) => {
   const m = Math.floor(s / 60);
@@ -80,33 +80,86 @@ const Index = () => {
   if (game.gameOver) {
     const allSolved = game.results.every((r) => r.solved);
     const totalAttempts = game.results.reduce((s, r) => s + r.attempts, 0);
+    const timeStr = formatTime(game.elapsedSeconds);
+
+    const emojiGrid = game.results
+      .map((r) => {
+        if (!r.solved) return "❌";
+        return Array.from({ length: r.attempts }, (_, i) => (i < r.attempts - 1 ? "⬜" : "🟩")).join("");
+      })
+      .join("\n");
+
+    const shareText = allSolved
+      ? `Türkçe Wordle'da 4-8 harfli tüm seviyeleri ${timeStr}'de tamamladım! Beni geçebilir misin? 🧩🚀\n\n${emojiGrid}`
+      : `Türkçe Wordle'da ${game.results.filter((r) => r.solved).length}/${game.results.length} seviye tamamladım! 🧩\n\n${emojiGrid}`;
+
+    const encodedText = encodeURIComponent(shareText);
+    const shareUrl = encodeURIComponent(window.location.href);
+
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 gap-3">
-        <h1 className="text-2xl font-bold text-foreground">{allSolved ? "🎉 Tebrikler!" : "😞 Oyun Bitti"}</h1>
-        <p className="text-sm text-muted-foreground">
-          {allSolved ? "Tüm seviyeleri tamamladın!" : `Doğru kelime: ${game.targetWord}`}
-        </p>
-        <p className="text-sm font-medium text-foreground flex items-center gap-1">
-          <Timer className="w-4 h-4" /> {formatTime(game.elapsedSeconds)}
-        </p>
-        <div className="flex flex-col gap-1 w-full max-w-xs">
-          {game.results.map((r) => (
-            <div key={r.level} className="flex justify-between border-b border-border py-1 text-sm font-medium text-foreground">
-              <span>{r.level} Harf</span>
-              <span>{r.solved ? `${r.attempts} tahmin` : "Başarısız"}</span>
+      <div className="flex h-[100dvh] flex-col items-center justify-between bg-background px-4 py-4">
+        <div className="flex-1 flex flex-col items-center justify-center gap-2 w-full max-w-xs">
+          <h1 className="text-2xl font-bold text-foreground">{allSolved ? "🎉 Tebrikler!" : "😞 Oyun Bitti"}</h1>
+          <p className="text-xs text-muted-foreground text-center">
+            {allSolved ? "Tüm seviyeleri tamamladın!" : `Doğru kelime: ${game.targetWord}`}
+          </p>
+          <p className="text-sm font-medium text-foreground flex items-center gap-1">
+            <Timer className="w-4 h-4" /> {timeStr}
+          </p>
+          <div className="flex flex-col gap-0.5 w-full">
+            {game.results.map((r) => (
+              <div key={r.level} className="flex justify-between border-b border-border py-0.5 text-xs font-medium text-foreground">
+                <span>{r.level} Harf</span>
+                <span>{r.solved ? `${r.attempts} tahmin` : "Başarısız"}</span>
+              </div>
+            ))}
+            <div className="flex justify-between pt-1 text-sm font-bold text-foreground">
+              <span>Toplam</span>
+              <span>{totalAttempts} tahmin</span>
             </div>
-          ))}
-          <div className="flex justify-between pt-1 text-base font-bold text-foreground">
-            <span>Toplam</span>
-            <span>{totalAttempts} tahmin</span>
           </div>
+
+          {/* Share buttons */}
+          <div className="flex items-center gap-2 mt-2">
+            <span className="text-xs text-muted-foreground flex items-center gap-1"><Share2 className="w-3 h-3" /> Paylaş:</span>
+            <a
+              href={`https://api.whatsapp.com/send?text=${encodedText}%20${shareUrl}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3 py-1.5 rounded-full bg-[hsl(142,71%,45%)] text-white text-[10px] font-bold hover:opacity-90 transition-opacity"
+            >
+              WhatsApp
+            </a>
+            <a
+              href={`https://twitter.com/intent/tweet?text=${encodedText}&url=${shareUrl}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3 py-1.5 rounded-full bg-foreground text-background text-[10px] font-bold hover:opacity-90 transition-opacity"
+            >
+              X
+            </a>
+            <a
+              href={`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}&quote=${encodedText}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3 py-1.5 rounded-full bg-[hsl(220,46%,48%)] text-white text-[10px] font-bold hover:opacity-90 transition-opacity"
+            >
+              Facebook
+            </a>
+          </div>
+
+          <button
+            onClick={game.restartGame}
+            className="mt-2 px-8 py-3 rounded-full bg-foreground text-background text-sm font-bold tracking-wide hover:opacity-90 transition-opacity"
+          >
+            Tekrar Oyna
+          </button>
         </div>
-        <button
-          onClick={game.restartGame}
-          className="mt-2 px-8 py-3 rounded-full bg-foreground text-background text-sm font-bold tracking-wide hover:opacity-90 transition-opacity"
-        >
-          Tekrar Oyna
-        </button>
+
+        {/* Ad placeholder */}
+        <div className="w-full max-w-lg border border-border rounded-md py-2 mt-3 flex items-center justify-center">
+          <span className="text-[10px] text-muted-foreground tracking-wide">Advertisement Area</span>
+        </div>
       </div>
     );
   }
@@ -185,13 +238,18 @@ const Index = () => {
       </div>
 
       {/* Keyboard */}
-      <div className="w-full pb-1 pt-0.5">
+      <div className="w-full pt-0.5">
         <Keyboard
           letterStates={game.letterStates}
           onKey={game.addLetter}
           onEnter={game.submitGuess}
           onBackspace={game.removeLetter}
         />
+      </div>
+
+      {/* Ad placeholder */}
+      <div className="w-full max-w-lg border border-border rounded-md py-1.5 mb-1 flex items-center justify-center shrink-0">
+        <span className="text-[10px] text-muted-foreground tracking-wide">Advertisement Area</span>
       </div>
     </div>
   );
