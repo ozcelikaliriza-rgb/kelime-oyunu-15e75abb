@@ -1,12 +1,10 @@
 import { useEffect } from "react";
 import { useWordle, trUpper } from "@/hooks/useWordle";
-import { useTheme } from "@/hooks/useTheme";
-import { useAccessibility } from "@/hooks/useAccessibility";
+import { useThemeContext } from "@/contexts/ThemeContext";
 import WordGrid from "@/components/WordGrid";
 import Keyboard from "@/components/Keyboard";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Lightbulb, Timer, Eye, Share2 } from "lucide-react";
-
 const formatTime = (s: number) => {
   const m = Math.floor(s / 60);
   const sec = s % 60;
@@ -15,8 +13,7 @@ const formatTime = (s: number) => {
 
 const Index = () => {
   const game = useWordle();
-  const { mode, cycleTheme } = useTheme();
-  const { colorBlind, toggleColorBlind } = useAccessibility();
+  const { mode, cycleTheme, colorBlind, toggleColorBlind } = useThemeContext();
 
   // Auto-focus for immediate typing
   useEffect(() => {
