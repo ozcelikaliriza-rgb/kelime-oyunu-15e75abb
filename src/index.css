@@ -152,4 +152,16 @@ body, .theme-transition {
 
 .animate-bounce-cell {
   animation: bounce-cell 0.5s ease-in-out;
+  animation-fill-mode: both;
+}
+
+@keyframes flip-tile {
+  0% { transform: perspective(400px) rotateX(0deg); }
+  50% { transform: perspective(400px) rotateX(90deg); }
+  100% { transform: perspective(400px) rotateX(0deg); }
+}
+
+.animate-flip-tile {
+  animation: flip-tile 0.5s ease-in-out;
+  animation-fill-mode: both;
 }
