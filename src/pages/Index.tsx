@@ -5,7 +5,7 @@ import { useThemeContext } from "@/contexts/ThemeContext";
 import WordGrid from "@/components/WordGrid";
 import Keyboard from "@/components/Keyboard";
 import ThemeToggle from "@/components/ThemeToggle";
-import { Lightbulb, Timer, Eye, Share2, Zap, BookOpen, Trophy } from "lucide-react";
+import { Lightbulb, Timer, Eye, Share2, Zap, BookOpen, Trophy, ExternalLink } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
@@ -216,6 +216,21 @@ const Index = () => {
               <div className="flex flex-col items-center gap-1">
                 <p className="text-lg font-extrabold text-foreground">{game.totalWordsGuessed} Kelime</p>
                 <p className="text-xs text-muted-foreground">En yüksek seviye: {game.highestLevel} harf</p>
+                {game.lastFailedWord && (
+                  <div className="flex items-center gap-2 mt-1 px-4 py-2 rounded-lg border-2 border-destructive/50 bg-destructive/10">
+                    <span className="text-xs text-muted-foreground">Aranan Kelime:</span>
+                    <span className="text-sm font-extrabold text-foreground">{game.lastFailedWord}</span>
+                    <a
+                      href={`https://sozluk.gov.tr/?kelime=${encodeURIComponent(game.lastFailedWord.toLocaleLowerCase("tr-TR"))}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="TDK Sözlük'te ara"
+                      className="text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                )}
               </div>
             ) : (
               <>
@@ -232,9 +247,19 @@ const Index = () => {
                   </motion.div>
                 )}
                 {!allSolved && (
-                  <p className="text-xs text-muted-foreground text-center">
-                    Doğru kelime: {game.targetWord}
-                  </p>
+                  <div className="flex items-center gap-2 mt-1 px-4 py-2 rounded-lg border-2 border-destructive/50 bg-destructive/10">
+                    <span className="text-xs text-muted-foreground">Aranan Kelime:</span>
+                    <span className="text-sm font-extrabold text-foreground">{game.targetWord}</span>
+                    <a
+                      href={`https://sozluk.gov.tr/?kelime=${encodeURIComponent(game.targetWord.toLocaleLowerCase("tr-TR"))}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="TDK Sözlük'te ara"
+                      className="text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
                 )}
                 <p className="text-sm font-medium text-foreground flex items-center gap-1">
                   <Timer className="w-4 h-4" /> {formatTime(game.elapsedSeconds)}
@@ -306,7 +331,7 @@ const Index = () => {
   const timerUrgent = isSuddenDeath && game.remainingSeconds <= 60;
 
   return (
-    <div className="flex h-[100dvh] flex-col items-center bg-background px-1 py-0 overflow-hidden">
+    <div className="relative flex h-[100dvh] flex-col items-center bg-background px-1 py-0 overflow-hidden">
       {/* Header */}
       <header className="flex items-center justify-between w-full max-w-lg px-2 pt-1 pb-0">
         <div className="flex flex-col">
@@ -374,6 +399,30 @@ const Index = () => {
           <ThemeToggle mode={mode} onCycle={cycleTheme} />
         </div>
       </header>
+
+      {/* Failed word overlay */}
+      <AnimatePresence>
+        {game.showingFailedWord && game.lastFailedWord && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 flex items-center gap-2 px-5 py-3 rounded-xl border-2 border-[hsl(45,90%,50%)] bg-card shadow-lg"
+          >
+            <span className="text-xs text-muted-foreground">Aranan Kelime:</span>
+            <span className="text-base font-extrabold text-foreground">{game.lastFailedWord}</span>
+            <a
+              href={`https://sozluk.gov.tr/?kelime=${encodeURIComponent(game.lastFailedWord.toLocaleLowerCase("tr-TR"))}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="TDK Sözlük'te ara"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Grid */}
       <div className="flex-1 flex items-center justify-center min-h-0">
