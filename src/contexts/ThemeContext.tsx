@@ -1,4 +1,4 @@
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext, useMemo, type ReactNode } from "react";
 import { useTheme, type ThemeMode } from "@/hooks/useTheme";
 import { useAccessibility } from "@/hooks/useAccessibility";
 
@@ -16,8 +16,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const { mode, resolvedTheme, cycleTheme } = useTheme();
   const { colorBlind, toggleColorBlind } = useAccessibility();
 
+  const value = useMemo(
+    () => ({ mode, resolvedTheme, cycleTheme, colorBlind, toggleColorBlind }),
+    [mode, resolvedTheme, cycleTheme, colorBlind, toggleColorBlind]
+  );
+
   return (
-    <ThemeContext.Provider value={{ mode, resolvedTheme, cycleTheme, colorBlind, toggleColorBlind }}>
+    <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
   );
