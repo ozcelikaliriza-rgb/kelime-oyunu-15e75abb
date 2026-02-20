@@ -237,8 +237,9 @@ export function useWordle() {
     setTotalWordsGuessed(0);
     setHighestLevel(0);
     setFlipRow(null);
-    setGameStarted(true);
-    setTimerRunning(true);
+    setBounceRow(null);
+    setGameStarted(false);
+    setTimerRunning(false);
   }, [pickWord]);
 
   const useHint = useCallback(() => {

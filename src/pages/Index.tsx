@@ -5,8 +5,8 @@ import { useThemeContext } from "@/contexts/ThemeContext";
 import WordGrid from "@/components/WordGrid";
 import Keyboard from "@/components/Keyboard";
 import ThemeToggle from "@/components/ThemeToggle";
-import { Lightbulb, Timer, Eye, Share2, Zap, BookOpen } from "lucide-react";
-import { motion } from "framer-motion";
+import { Lightbulb, Timer, Eye, Share2, Zap, BookOpen, Trophy } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
 const formatTime = (s: number) => {
@@ -29,6 +29,33 @@ const Index = () => {
   const game = useWordle();
   const { mode, cycleTheme, colorBlind, toggleColorBlind } = useThemeContext();
   const [selectedMode, setSelectedMode] = useState<GameMode>("standard");
+
+  // Personal best from localStorage
+  const [bestStandard, setBestStandard] = useState<number | null>(() => {
+    const v = localStorage.getItem("wordle_best_standard");
+    return v ? Number(v) : null;
+  });
+  const [bestSuddenDeath, setBestSuddenDeath] = useState<number | null>(() => {
+    const v = localStorage.getItem("wordle_best_sudden");
+    return v ? Number(v) : null;
+  });
+
+  // Save personal bests when game ends
+  useEffect(() => {
+    if (!game.gameOver) return;
+    if (game.gameMode === "standard" && game.results.every((r) => r.solved)) {
+      if (bestStandard === null || game.elapsedSeconds < bestStandard) {
+        setBestStandard(game.elapsedSeconds);
+        localStorage.setItem("wordle_best_standard", String(game.elapsedSeconds));
+      }
+    }
+    if (game.gameMode === "suddenDeath") {
+      if (bestSuddenDeath === null || game.totalWordsGuessed > bestSuddenDeath) {
+        setBestSuddenDeath(game.totalWordsGuessed);
+        localStorage.setItem("wordle_best_sudden", String(game.totalWordsGuessed));
+      }
+    }
+  }, [game.gameOver]);
 
   // Auto-focus for immediate typing
   useEffect(() => {
@@ -65,69 +92,85 @@ const Index = () => {
     );
   }
 
+  const fadeVariants = {
+    initial: { opacity: 0 },
+    animate: { opacity: 1, transition: { duration: 0.4 } },
+    exit: { opacity: 0, transition: { duration: 0.3 } },
+  };
+
   if (!game.gameStarted) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 gap-6">
-        {/* Theme & accessibility toggles */}
-        <div className="absolute top-3 right-3 flex items-center gap-1.5">
-          <button
-            onClick={toggleColorBlind}
-            title="Renk körlüğü modu"
-            className={`flex items-center justify-center w-7 h-7 rounded-md border transition-colors ${
-              colorBlind ? "bg-foreground text-background border-foreground" : "bg-secondary text-secondary-foreground border-border hover:bg-muted"
-            }`}
-          >
-            <Eye className="w-4 h-4" />
-          </button>
-          <ThemeToggle mode={mode} onCycle={cycleTheme} />
-        </div>
-
-        <div className="flex flex-col items-center gap-2">
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground">Türkçe Wordle</h1>
-          <p className="text-sm text-muted-foreground text-center max-w-xs">4'ten 8'e kadar harfli kelimeleri tahmin et!</p>
-        </div>
-
-        {/* Mode selector */}
-        <div className="flex gap-2">
-          <button
-            onClick={() => setSelectedMode("standard")}
-            className={cn(
-              "flex items-center gap-1.5 px-4 py-2.5 rounded-lg border-2 text-sm font-bold transition-all",
-              selectedMode === "standard"
-                ? "border-foreground bg-foreground text-background"
-                : "border-border bg-background text-foreground hover:bg-muted"
-            )}
-          >
-            <BookOpen className="w-4 h-4" />
-            Standart
-          </button>
-          <button
-            onClick={() => setSelectedMode("suddenDeath")}
-            className={cn(
-              "flex items-center gap-1.5 px-4 py-2.5 rounded-lg border-2 text-sm font-bold transition-all",
-              selectedMode === "suddenDeath"
-                ? "border-foreground bg-foreground text-background"
-                : "border-border bg-background text-foreground hover:bg-muted"
-            )}
-          >
-            <Zap className="w-4 h-4" />
-            Zamana Karşı
-          </button>
-        </div>
-
-        {selectedMode === "suddenDeath" && (
-          <p className="text-xs text-muted-foreground text-center max-w-xs">
-            10 dakikan var! Her doğru kelime +30 saniye kazandırır. Süre bitince oyun biter.
-          </p>
-        )}
-
-        <button
-          onClick={() => game.startGame(selectedMode)}
-          className="px-8 py-3 rounded-full bg-foreground text-background text-sm font-bold tracking-wide hover:opacity-90 transition-opacity"
+      <AnimatePresence mode="wait">
+        <motion.div
+          key="home"
+          variants={fadeVariants}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          className="flex min-h-screen flex-col items-center justify-center bg-background px-4 gap-8"
         >
-          Oyuna Başla
-        </button>
-      </div>
+          {/* Theme & accessibility toggles */}
+          <div className="absolute top-3 right-3 flex items-center gap-1.5">
+            <button
+              onClick={toggleColorBlind}
+              title="Renk körlüğü modu"
+              className={`flex items-center justify-center w-7 h-7 rounded-md border transition-colors ${
+                colorBlind ? "bg-foreground text-background border-foreground" : "bg-secondary text-secondary-foreground border-border hover:bg-muted"
+              }`}
+            >
+              <Eye className="w-4 h-4" />
+            </button>
+            <ThemeToggle mode={mode} onCycle={cycleTheme} />
+          </div>
+
+          <div className="flex flex-col items-center gap-2">
+            <h1 className="text-4xl font-extrabold tracking-tight text-foreground">Türkçe Wordle</h1>
+            <p className="text-sm text-muted-foreground text-center max-w-xs">4'ten 8'e kadar harfli kelimeleri tahmin et!</p>
+          </div>
+
+          {/* Personal Best */}
+          {bestStandard !== null || bestSuddenDeath !== null ? (
+            <div className="flex flex-col items-center gap-1 border border-border rounded-xl px-6 py-3 bg-card">
+              <span className="text-xs font-bold text-muted-foreground flex items-center gap-1"><Trophy className="w-3 h-3" /> Kişisel Rekor</span>
+              <div className="flex gap-4 text-center">
+                {bestStandard !== null && (
+                  <div>
+                    <p className="text-lg font-extrabold text-foreground">{formatTime(bestStandard)}</p>
+                    <p className="text-[10px] text-muted-foreground">Standart</p>
+                  </div>
+                )}
+                {bestSuddenDeath !== null && (
+                  <div>
+                    <p className="text-lg font-extrabold text-foreground">{bestSuddenDeath}</p>
+                    <p className="text-[10px] text-muted-foreground">Kelime (ZK)</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : null}
+
+          {/* Mode selector — large buttons */}
+          <div className="flex flex-col gap-3 w-full max-w-xs">
+            <button
+              onClick={() => { setSelectedMode("standard"); game.startGame("standard"); }}
+              className="flex items-center justify-center gap-2 w-full py-4 rounded-xl border-2 border-foreground bg-foreground text-background text-sm font-bold tracking-wide hover:opacity-90 transition-opacity"
+            >
+              <BookOpen className="w-5 h-5" />
+              Standart Mod
+            </button>
+            <button
+              onClick={() => { setSelectedMode("suddenDeath"); game.startGame("suddenDeath"); }}
+              className="flex items-center justify-center gap-2 w-full py-4 rounded-xl border-2 border-border bg-background text-foreground text-sm font-bold tracking-wide hover:bg-muted transition-colors"
+            >
+              <Zap className="w-5 h-5" />
+              Zamana Karşı
+            </button>
+            <p className="text-[10px] text-muted-foreground text-center">
+              Zamana Karşı: 10 dakika, her doğru kelime +30 saniye!
+            </p>
+          </div>
+        </motion.div>
+      </AnimatePresence>
     );
   }
 
@@ -155,97 +198,106 @@ const Index = () => {
     const shareUrl = encodeURIComponent(window.location.href);
 
     return (
-      <div className="flex h-[100dvh] flex-col items-center justify-between bg-background px-4 py-4">
-        <div className="flex-1 flex flex-col items-center justify-center gap-2 w-full max-w-xs">
-          <h1 className="text-2xl font-bold text-foreground">
-            {isSuddenDeath ? "⏱️ Süre Doldu!" : allSolved ? "🎉 Tebrikler!" : "😞 Oyun Bitti"}
-          </h1>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key="results"
+          variants={fadeVariants}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          className="flex h-[100dvh] flex-col items-center justify-between bg-background px-4 py-4"
+        >
+          <div className="flex-1 flex flex-col items-center justify-center gap-2 w-full max-w-xs">
+            <h1 className="text-2xl font-bold text-foreground">
+              {isSuddenDeath ? "⏱️ Süre Doldu!" : allSolved ? "🎉 Tebrikler!" : "😞 Oyun Bitti"}
+            </h1>
 
-          {isSuddenDeath ? (
-            <div className="flex flex-col items-center gap-1">
-              <p className="text-lg font-extrabold text-foreground">{game.totalWordsGuessed} Kelime</p>
-              <p className="text-xs text-muted-foreground">En yüksek seviye: {game.highestLevel} harf</p>
-            </div>
-          ) : (
-            <>
-              {allSolved && achievement && (
-                <motion.div
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.3 }}
-                  className="flex flex-col items-center gap-0.5"
-                >
-                  <span className="text-3xl">{achievement.emoji}</span>
-                  <h2 className="text-xl font-extrabold tracking-tight text-foreground">{achievement.title}</h2>
-                  <p className="text-[11px] text-muted-foreground text-center italic">{achievement.desc}</p>
-                </motion.div>
-              )}
-              {!allSolved && (
-                <p className="text-xs text-muted-foreground text-center">
-                  Doğru kelime: {game.targetWord}
-                </p>
-              )}
-              <p className="text-sm font-medium text-foreground flex items-center gap-1">
-                <Timer className="w-4 h-4" /> {formatTime(game.elapsedSeconds)}
-              </p>
-            </>
-          )}
-
-          <div className="flex flex-col gap-0.5 w-full">
-            {game.results.map((r, i) => (
-              <div key={`${r.level}-${i}`} className="flex justify-between border-b border-border py-0.5 text-xs font-medium text-foreground">
-                <span>{r.level} Harf</span>
-                <span>{r.solved ? `${r.attempts} tahmin` : "Başarısız"}</span>
+            {isSuddenDeath ? (
+              <div className="flex flex-col items-center gap-1">
+                <p className="text-lg font-extrabold text-foreground">{game.totalWordsGuessed} Kelime</p>
+                <p className="text-xs text-muted-foreground">En yüksek seviye: {game.highestLevel} harf</p>
               </div>
-            ))}
-            <div className="flex justify-between pt-1 text-sm font-bold text-foreground">
-              <span>Toplam</span>
-              <span>{totalAttempts} tahmin</span>
+            ) : (
+              <>
+                {allSolved && achievement && (
+                  <motion.div
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.3 }}
+                    className="flex flex-col items-center gap-0.5"
+                  >
+                    <span className="text-3xl">{achievement.emoji}</span>
+                    <h2 className="text-xl font-extrabold tracking-tight text-foreground">{achievement.title}</h2>
+                    <p className="text-[11px] text-muted-foreground text-center italic">{achievement.desc}</p>
+                  </motion.div>
+                )}
+                {!allSolved && (
+                  <p className="text-xs text-muted-foreground text-center">
+                    Doğru kelime: {game.targetWord}
+                  </p>
+                )}
+                <p className="text-sm font-medium text-foreground flex items-center gap-1">
+                  <Timer className="w-4 h-4" /> {formatTime(game.elapsedSeconds)}
+                </p>
+              </>
+            )}
+
+            <div className="flex flex-col gap-0.5 w-full">
+              {game.results.map((r, i) => (
+                <div key={`${r.level}-${i}`} className="flex justify-between border-b border-border py-0.5 text-xs font-medium text-foreground">
+                  <span>{r.level} Harf</span>
+                  <span>{r.solved ? `${r.attempts} tahmin` : "Başarısız"}</span>
+                </div>
+              ))}
+              <div className="flex justify-between pt-1 text-sm font-bold text-foreground">
+                <span>Toplam</span>
+                <span>{totalAttempts} tahmin</span>
+              </div>
             </div>
+
+            {/* Share buttons */}
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-xs text-muted-foreground flex items-center gap-1"><Share2 className="w-3 h-3" /> Paylaş:</span>
+              <a
+                href={`https://wa.me/?text=${encodedText}%20${shareUrl}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-1.5 rounded-full bg-[hsl(142,71%,45%)] text-white text-[10px] font-bold hover:opacity-90 transition-opacity"
+              >
+                WhatsApp
+              </a>
+              <a
+                href={`https://twitter.com/intent/tweet?text=${encodedText}&url=${shareUrl}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-1.5 rounded-full bg-foreground text-background text-[10px] font-bold hover:opacity-90 transition-opacity"
+              >
+                X
+              </a>
+              <a
+                href={`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}&quote=${encodedText}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-1.5 rounded-full bg-[hsl(220,46%,48%)] text-white text-[10px] font-bold hover:opacity-90 transition-opacity"
+              >
+                Facebook
+              </a>
+            </div>
+
+            <button
+              onClick={game.restartGame}
+              className="mt-2 px-8 py-3 rounded-full bg-foreground text-background text-sm font-bold tracking-wide hover:opacity-90 transition-opacity"
+            >
+              Ana Menü
+            </button>
           </div>
 
-          {/* Share buttons */}
-          <div className="flex items-center gap-2 mt-2">
-            <span className="text-xs text-muted-foreground flex items-center gap-1"><Share2 className="w-3 h-3" /> Paylaş:</span>
-            <a
-              href={`https://wa.me/?text=${encodedText}%20${shareUrl}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-3 py-1.5 rounded-full bg-[hsl(142,71%,45%)] text-white text-[10px] font-bold hover:opacity-90 transition-opacity"
-            >
-              WhatsApp
-            </a>
-            <a
-              href={`https://twitter.com/intent/tweet?text=${encodedText}&url=${shareUrl}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-3 py-1.5 rounded-full bg-foreground text-background text-[10px] font-bold hover:opacity-90 transition-opacity"
-            >
-              X
-            </a>
-            <a
-              href={`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}&quote=${encodedText}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-3 py-1.5 rounded-full bg-[hsl(220,46%,48%)] text-white text-[10px] font-bold hover:opacity-90 transition-opacity"
-            >
-              Facebook
-            </a>
+          {/* Ad placeholder */}
+          <div className="w-full max-w-lg border border-border rounded-md py-2 mt-3 flex items-center justify-center">
+            <span className="text-[10px] text-muted-foreground tracking-wide">Advertisement Area</span>
           </div>
-
-          <button
-            onClick={game.restartGame}
-            className="mt-2 px-8 py-3 rounded-full bg-foreground text-background text-sm font-bold tracking-wide hover:opacity-90 transition-opacity"
-          >
-            Tekrar Oyna
-          </button>
-        </div>
-
-        {/* Ad placeholder */}
-        <div className="w-full max-w-lg border border-border rounded-md py-2 mt-3 flex items-center justify-center">
-          <span className="text-[10px] text-muted-foreground tracking-wide">Advertisement Area</span>
-        </div>
-      </div>
+        </motion.div>
+      </AnimatePresence>
     );
   }
 
