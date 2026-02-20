@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { cn } from "@/lib/utils";
 import { useWordle, trUpper } from "@/hooks/useWordle";
 import { useThemeContext } from "@/contexts/ThemeContext";
 import WordGrid from "@/components/WordGrid";
@@ -217,13 +218,21 @@ const Index = () => {
           </div>
         </div>
         <div className="flex items-center gap-1.5">
-          {game.hintsRemaining > 0 && (
+          {(game.hintsRemaining > 0 || (game.revealedIndices.size > 0 && game.wordLength >= 7)) && (
             <button
               onClick={game.useHint}
-              className="flex items-center gap-0.5 px-2 py-1 rounded bg-accent text-accent-foreground text-[10px] font-bold border border-border hover:bg-muted transition-colors"
+              disabled={game.hintsRemaining <= 0}
+              className={cn(
+                "flex items-center gap-0.5 px-2 py-1 rounded text-[10px] font-bold border transition-colors",
+                game.hintsRemaining > 0
+                  ? "bg-accent text-accent-foreground border-border hover:bg-muted cursor-pointer"
+                  : "bg-muted text-muted-foreground border-border cursor-not-allowed opacity-50"
+              )}
             >
               <Lightbulb className="w-3 h-3" />
-              {game.hintsRemaining}
+              {game.hintsRemaining > 0
+                ? `${game.hintsRemaining} Joker`
+                : "Joker Bitti"}
             </button>
           )}
           <span className="text-xs font-mono font-semibold text-muted-foreground flex items-center gap-0.5">
