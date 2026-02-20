@@ -5,7 +5,7 @@ import { useThemeContext } from "@/contexts/ThemeContext";
 import WordGrid from "@/components/WordGrid";
 import Keyboard from "@/components/Keyboard";
 import ThemeToggle from "@/components/ThemeToggle";
-import { Lightbulb, Timer, Eye, Share2, Zap, BookOpen, Trophy, ExternalLink } from "lucide-react";
+import { Lightbulb, Timer, Eye, Share2, Zap, BookOpen, Trophy } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
@@ -178,8 +178,8 @@ const Index = () => {
     const isSuddenDeath = game.gameMode === "suddenDeath";
     const allSolved = game.results.every((r) => r.solved);
     const totalAttempts = game.results.reduce((s, r) => s + r.attempts, 0);
-    const timeStr = isSuddenDeath ? formatTime(0) : formatTime(game.elapsedSeconds);
-    const achievement = !isSuddenDeath ? getAchievement(game.elapsedSeconds) : null;
+    const achievement = getAchievement(isSuddenDeath ? 150 : game.elapsedSeconds);
+    const showFailedWord = isSuddenDeath ? game.lastFailedWord : (!allSolved ? game.targetWord : null);
 
     const emojiGrid = game.results
       .map((r) => {
@@ -189,9 +189,9 @@ const Index = () => {
       .join("\n");
 
     const shareText = isSuddenDeath
-      ? `Zamana Karşı modunda ${game.totalWordsGuessed} kelime bildim! 🔥 En yüksek seviye: ${game.highestLevel} harf 🚀\n\n${emojiGrid}`
+      ? `Zamana Karşı modunda ${game.totalWordsGuessed} kelime bildim! ${achievement.emoji} ${achievement.title} 🔥\n\n${emojiGrid}`
       : allSolved
-      ? `Wordle TR'de ${achievement?.emoji} ${achievement?.title} oldum! Bütün kelimeleri ${formatTime(game.elapsedSeconds)}'de bildim. Hadi gel, beni geç! 🚀\n\n${emojiGrid}`
+      ? `Wordle TR'de ${achievement.emoji} ${achievement.title} oldum! Bütün kelimeleri ${formatTime(game.elapsedSeconds)}'de bildim. Hadi gel, beni geç! 🚀\n\n${emojiGrid}`
       : `Türkçe Wordle'da ${game.results.filter((r) => r.solved).length}/${game.results.length} seviye tamamladım! 🧩\n\n${emojiGrid}`;
 
     const encodedText = encodeURIComponent(shareText);
@@ -212,61 +212,39 @@ const Index = () => {
               {isSuddenDeath ? "⏱️ Süre Doldu!" : allSolved ? "🎉 Tebrikler!" : "😞 Oyun Bitti"}
             </h1>
 
-            {isSuddenDeath ? (
-              <div className="flex flex-col items-center gap-1">
-                <p className="text-lg font-extrabold text-foreground">{game.totalWordsGuessed} Kelime</p>
-                <p className="text-xs text-muted-foreground">En yüksek seviye: {game.highestLevel} harf</p>
-                {game.lastFailedWord && (
-                  <div className="flex items-center gap-2 mt-1 px-4 py-2 rounded-lg border-2 border-destructive/50 bg-destructive/10">
-                    <span className="text-xs text-muted-foreground">Aranan Kelime:</span>
-                    <span className="text-sm font-extrabold text-foreground">{game.lastFailedWord}</span>
-                    <a
-                      href={`https://sozluk.gov.tr/?kelime=${encodeURIComponent(game.lastFailedWord.toLocaleLowerCase("tr-TR"))}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title="TDK Sözlük'te ara"
-                      className="text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
-                  </div>
-                )}
+            {/* Reveal failed word */}
+            {showFailedWord && (
+              <div className="flex items-center gap-2 mt-1 px-4 py-2 rounded-lg border-2 border-destructive/50 bg-destructive/10">
+                <span className="text-xs text-muted-foreground">Aranan Kelime:</span>
+                <span className="text-sm font-extrabold text-foreground">{showFailedWord}</span>
               </div>
-            ) : (
-              <>
-                {allSolved && achievement && (
-                  <motion.div
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.3 }}
-                    className="flex flex-col items-center gap-0.5"
-                  >
-                    <span className="text-3xl">{achievement.emoji}</span>
-                    <h2 className="text-xl font-extrabold tracking-tight text-foreground">{achievement.title}</h2>
-                    <p className="text-[11px] text-muted-foreground text-center italic">{achievement.desc}</p>
-                  </motion.div>
-                )}
-                {!allSolved && (
-                  <div className="flex items-center gap-2 mt-1 px-4 py-2 rounded-lg border-2 border-destructive/50 bg-destructive/10">
-                    <span className="text-xs text-muted-foreground">Aranan Kelime:</span>
-                    <span className="text-sm font-extrabold text-foreground">{game.targetWord}</span>
-                    <a
-                      href={`https://sozluk.gov.tr/?kelime=${encodeURIComponent(game.targetWord.toLocaleLowerCase("tr-TR"))}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title="TDK Sözlük'te ara"
-                      className="text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
-                  </div>
-                )}
-                <p className="text-sm font-medium text-foreground flex items-center gap-1">
-                  <Timer className="w-4 h-4" /> {formatTime(game.elapsedSeconds)}
-                </p>
-              </>
             )}
 
+            {/* Achievement */}
+            <motion.div
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.3 }}
+              className="flex flex-col items-center gap-0.5"
+            >
+              <span className="text-3xl">{achievement.emoji}</span>
+              <h2 className="text-xl font-extrabold tracking-tight text-foreground">{achievement.title}</h2>
+              <p className="text-[11px] text-muted-foreground text-center italic">{achievement.desc}</p>
+            </motion.div>
+
+            {/* Stats */}
+            <div className="flex items-center gap-3">
+              <p className="text-sm font-medium text-foreground flex items-center gap-1">
+                <Timer className="w-4 h-4" /> {formatTime(game.elapsedSeconds)}
+              </p>
+              {isSuddenDeath && (
+                <p className="text-sm font-medium text-foreground">
+                  {game.totalWordsGuessed} Kelime · {game.highestLevel} Harf
+                </p>
+              )}
+            </div>
+
+            {/* Results breakdown */}
             <div className="flex flex-col gap-0.5 w-full">
               {game.results.map((r, i) => (
                 <div key={`${r.level}-${i}`} className="flex justify-between border-b border-border py-0.5 text-xs font-medium text-foreground">
@@ -411,15 +389,6 @@ const Index = () => {
           >
             <span className="text-xs text-muted-foreground">Aranan Kelime:</span>
             <span className="text-base font-extrabold text-foreground">{game.lastFailedWord}</span>
-            <a
-              href={`https://sozluk.gov.tr/?kelime=${encodeURIComponent(game.lastFailedWord.toLocaleLowerCase("tr-TR"))}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              title="TDK Sözlük'te ara"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
           </motion.div>
         )}
       </AnimatePresence>
