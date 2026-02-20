@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 
 export type LetterState = "correct" | "present" | "absent" | "empty";
+export type GameMode = "standard" | "suddenDeath";
 
 export interface TileData {
   letter: string;
@@ -16,6 +17,8 @@ export interface LevelResult {
 const MAX_ATTEMPTS = 6;
 const LEVELS = [4, 5, 6, 7, 8];
 const HINTS_PER_LEVEL: Record<number, number> = { 7: 1, 8: 2 };
+const SUDDEN_DEATH_START = 600; // 10 minutes
+const SUDDEN_DEATH_BONUS = 30; // +30s per correct
 
 /** Turkish-aware uppercase */
 export const trUpper = (s: string) => s.toLocaleUpperCase("tr-TR");
@@ -24,6 +27,7 @@ export function useWordle() {
   const [wordLists, setWordLists] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
   const [gameStarted, setGameStarted] = useState(false);
+  const [gameMode, setGameMode] = useState<GameMode>("standard");
   const [currentLevelIndex, setCurrentLevelIndex] = useState(0);
   const [targetWord, setTargetWord] = useState("");
   const [guesses, setGuesses] = useState<TileData[][]>([]);
@@ -36,10 +40,15 @@ export function useWordle() {
   const [shake, setShake] = useState(false);
   const [invalidWord, setInvalidWord] = useState(false);
   const [bounceRow, setBounceRow] = useState<number | null>(null);
+  const [flipRow, setFlipRow] = useState<number | null>(null);
   const [hintsRemaining, setHintsRemaining] = useState(0);
   const [revealedIndices, setRevealedIndices] = useState<Set<number>>(new Set());
   const [timerRunning, setTimerRunning] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  // Sudden death
+  const [remainingSeconds, setRemainingSeconds] = useState(SUDDEN_DEATH_START);
+  const [totalWordsGuessed, setTotalWordsGuessed] = useState(0);
+  const [highestLevel, setHighestLevel] = useState(0);
 
   const wordLength = LEVELS[currentLevelIndex];
 
@@ -60,12 +69,29 @@ export function useWordle() {
       });
   }, []);
 
-  // Continuous timer
+  // Standard timer (counts up)
   useEffect(() => {
-    if (!timerRunning) return;
+    if (!timerRunning || gameMode !== "standard") return;
     const interval = setInterval(() => setElapsedSeconds((s) => s + 1), 1000);
     return () => clearInterval(interval);
-  }, [timerRunning]);
+  }, [timerRunning, gameMode]);
+
+  // Sudden death timer (counts down)
+  useEffect(() => {
+    if (!timerRunning || gameMode !== "suddenDeath") return;
+    const interval = setInterval(() => {
+      setRemainingSeconds((s) => {
+        if (s <= 1) {
+          clearInterval(interval);
+          setTimerRunning(false);
+          setGameOver(true);
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [timerRunning, gameMode]);
 
   const pickWord = useCallback(
     (levelIdx: number) => {
@@ -82,14 +108,12 @@ export function useWordle() {
       const targetArr = targetWord.split("");
       const used = new Array(targetArr.length).fill(false);
 
-      // First pass: correct
       for (let i = 0; i < guess.length; i++) {
         if (guess[i] === targetArr[i]) {
           result[i].state = "correct";
           used[i] = true;
         }
       }
-      // Second pass: present
       for (let i = 0; i < guess.length; i++) {
         if (result[i].state === "correct") continue;
         const idx = targetArr.findIndex((c, j) => c === guess[i] && !used[j]);
@@ -102,6 +126,17 @@ export function useWordle() {
     },
     [targetWord]
   );
+
+  const advanceLevel = useCallback((nextIdx: number) => {
+    const nextLen = LEVELS[nextIdx];
+    setCurrentLevelIndex(nextIdx);
+    setTargetWord(pickWord(nextIdx));
+    setGuesses([]);
+    setCurrentGuess("");
+    setLetterStates({});
+    setRevealedIndices(new Set());
+    setHintsRemaining(HINTS_PER_LEVEL[nextLen] || 0);
+  }, [pickWord]);
 
   const submitGuess = useCallback(() => {
     if (currentGuess.length !== wordLength) return;
@@ -131,36 +166,58 @@ export function useWordle() {
 
     const won = currentGuess === targetWord;
     if (won) {
+      setFlipRow(newGuesses.length - 1);
       setBounceRow(newGuesses.length - 1);
       if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
       setResults((r) => [...r, { level: wordLength, attempts: newGuesses.length, solved: true }]);
-      if (currentLevelIndex === LEVELS.length - 1) {
-        setTimerRunning(false);
-        setTimeout(() => { setBounceRow(null); setGameOver(true); }, 1200);
-      } else {
+
+      if (gameMode === "suddenDeath") {
+        setRemainingSeconds((s) => s + SUDDEN_DEATH_BONUS);
+        setTotalWordsGuessed((t) => t + 1);
+        setHighestLevel((h) => Math.max(h, wordLength));
+
+        // Loop: if at 8 letters, restart from 4
+        const nextIdx = currentLevelIndex >= LEVELS.length - 1 ? 0 : currentLevelIndex + 1;
         setTimeout(() => {
+          setFlipRow(null);
           setBounceRow(null);
-          const next = currentLevelIndex + 1;
-          const nextLen = LEVELS[next];
-          setCurrentLevelIndex(next);
-          setTargetWord(pickWord(next));
-          setGuesses([]);
-          setCurrentGuess("");
-          setLetterStates({});
-          setRevealedIndices(new Set());
-          setHintsRemaining(HINTS_PER_LEVEL[nextLen] || 0);
-        }, 1000);
+          advanceLevel(nextIdx);
+        }, 1200);
+      } else {
+        // Standard mode
+        if (currentLevelIndex === LEVELS.length - 1) {
+          setTimerRunning(false);
+          setTimeout(() => { setFlipRow(null); setBounceRow(null); setGameOver(true); }, 1200);
+        } else {
+          setTimeout(() => {
+            setFlipRow(null);
+            setBounceRow(null);
+            advanceLevel(currentLevelIndex + 1);
+          }, 1200);
+        }
       }
     } else if (newGuesses.length >= MAX_ATTEMPTS) {
       setResults((r) => [...r, { level: wordLength, attempts: MAX_ATTEMPTS, solved: false }]);
-      setTimerRunning(false);
-      setTimeout(() => setGameOver(true), 800);
+      if (gameMode === "suddenDeath") {
+        // In sudden death, failing a word = game over
+        setTimerRunning(false);
+        setTimeout(() => setGameOver(true), 800);
+      } else {
+        setTimerRunning(false);
+        setTimeout(() => setGameOver(true), 800);
+      }
     }
-  }, [currentGuess, wordLength, wordLists, evaluateGuess, guesses, letterStates, targetWord, currentLevelIndex, pickWord]);
+  }, [currentGuess, wordLength, wordLists, evaluateGuess, guesses, letterStates, targetWord, currentLevelIndex, pickWord, gameMode, advanceLevel]);
 
-  const startGame = useCallback(() => {
+  const startGame = useCallback((mode: GameMode = "standard") => {
+    setGameMode(mode);
     setGameStarted(true);
     setTimerRunning(true);
+    if (mode === "suddenDeath") {
+      setRemainingSeconds(SUDDEN_DEATH_START);
+      setTotalWordsGuessed(0);
+      setHighestLevel(0);
+    }
   }, []);
 
   const restartGame = useCallback(() => {
@@ -176,27 +233,22 @@ export function useWordle() {
     setRevealedIndices(new Set());
     setHintsRemaining(0);
     setElapsedSeconds(0);
+    setRemainingSeconds(SUDDEN_DEATH_START);
+    setTotalWordsGuessed(0);
+    setHighestLevel(0);
+    setFlipRow(null);
     setGameStarted(true);
     setTimerRunning(true);
   }, [pickWord]);
 
   const useHint = useCallback(() => {
     if (hintsRemaining <= 0 || !targetWord) return;
-    // Collect positions already correct from previous guesses
     const correctFromGuesses = new Set<number>();
-    if (guesses.length > 0) {
-      const lastGuess = guesses[guesses.length - 1];
-      for (let i = 0; i < lastGuess.length; i++) {
-        if (lastGuess[i].state === "correct") correctFromGuesses.add(i);
-      }
-      // Check all guesses for correct positions
-      for (const g of guesses) {
-        for (let i = 0; i < g.length; i++) {
-          if (g[i].state === "correct") correctFromGuesses.add(i);
-        }
+    for (const g of guesses) {
+      for (let i = 0; i < g.length; i++) {
+        if (g[i].state === "correct") correctFromGuesses.add(i);
       }
     }
-    // Only pick from positions not yet correct and not already revealed
     const candidates: number[] = [];
     for (let i = 0; i < targetWord.length; i++) {
       if (!revealedIndices.has(i) && !correctFromGuesses.has(i)) candidates.push(i);
@@ -223,6 +275,7 @@ export function useWordle() {
   return {
     loading,
     gameStarted,
+    gameMode,
     wordLength,
     currentLevelIndex,
     guesses,
@@ -235,10 +288,14 @@ export function useWordle() {
     shake,
     invalidWord,
     bounceRow,
+    flipRow,
     targetWord,
     maxAttempts: MAX_ATTEMPTS,
     levels: LEVELS,
     elapsedSeconds,
+    remainingSeconds,
+    totalWordsGuessed,
+    highestLevel,
     hintsRemaining,
     revealedIndices,
     addLetter,

@@ -9,6 +9,7 @@ interface WordGridProps {
   maxAttempts: number;
   shake: boolean;
   bounceRow: number | null;
+  flipRow: number | null;
   revealedIndices: Set<number>;
   targetWord: string;
   colorBlind?: boolean;
@@ -28,7 +29,7 @@ function CbIcon({ state }: { state: string }) {
   return null;
 }
 
-export default function WordGrid({ guesses, currentGuess, wordLength, maxAttempts, shake, bounceRow, revealedIndices, targetWord, colorBlind }: WordGridProps) {
+export default function WordGrid({ guesses, currentGuess, wordLength, maxAttempts, shake, bounceRow, flipRow, revealedIndices, targetWord, colorBlind }: WordGridProps) {
   const rows: TileData[][] = [];
 
   for (const g of guesses) rows.push(g);
@@ -64,15 +65,21 @@ export default function WordGrid({ guesses, currentGuess, wordLength, maxAttempt
               : wordLength >= 6
               ? "w-[42px] h-[42px] text-base sm:w-[50px] sm:h-[50px] sm:text-lg"
               : "w-[48px] h-[48px] text-lg sm:w-[56px] sm:h-[56px] sm:text-xl";
+
+            const isFlipping = flipRow === ri;
+
             return (
               <div
                 key={ci}
-                style={bounceRow === ri ? { animationDelay: `${ci * 80}ms` } : undefined}
+                style={{
+                  animationDelay: isFlipping || bounceRow === ri ? `${ci * 100}ms` : undefined,
+                }}
                 className={cn(
                   "relative flex items-center justify-center border-2 font-bold uppercase transition-colors duration-300",
                   sizeClass,
                   stateStyles[tile.state],
-                  bounceRow === ri && "animate-bounce-cell"
+                  bounceRow === ri && "animate-bounce-cell",
+                  isFlipping && "animate-flip-tile"
                 )}
               >
                 {tile.letter}

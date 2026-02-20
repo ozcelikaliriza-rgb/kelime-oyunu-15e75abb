@@ -1,12 +1,13 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import { useWordle, trUpper } from "@/hooks/useWordle";
+import { useWordle, trUpper, GameMode } from "@/hooks/useWordle";
 import { useThemeContext } from "@/contexts/ThemeContext";
 import WordGrid from "@/components/WordGrid";
 import Keyboard from "@/components/Keyboard";
 import ThemeToggle from "@/components/ThemeToggle";
-import { Lightbulb, Timer, Eye, Share2 } from "lucide-react";
+import { Lightbulb, Timer, Eye, Share2, Zap, BookOpen } from "lucide-react";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 
 const formatTime = (s: number) => {
   const m = Math.floor(s / 60);
@@ -27,11 +28,19 @@ const getAchievement = (seconds: number) => {
 const Index = () => {
   const game = useWordle();
   const { mode, cycleTheme, colorBlind, toggleColorBlind } = useThemeContext();
+  const [selectedMode, setSelectedMode] = useState<GameMode>("standard");
 
   // Auto-focus for immediate typing
   useEffect(() => {
     window.focus();
   }, [game.currentLevelIndex]);
+
+  // Show toast for invalid word
+  useEffect(() => {
+    if (game.invalidWord) {
+      toast("Sözlükte bulunamadı", { duration: 1500 });
+    }
+  }, [game.invalidWord]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -77,8 +86,43 @@ const Index = () => {
           <h1 className="text-3xl font-extrabold tracking-tight text-foreground">Türkçe Wordle</h1>
           <p className="text-sm text-muted-foreground text-center max-w-xs">4'ten 8'e kadar harfli kelimeleri tahmin et!</p>
         </div>
+
+        {/* Mode selector */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => setSelectedMode("standard")}
+            className={cn(
+              "flex items-center gap-1.5 px-4 py-2.5 rounded-lg border-2 text-sm font-bold transition-all",
+              selectedMode === "standard"
+                ? "border-foreground bg-foreground text-background"
+                : "border-border bg-background text-foreground hover:bg-muted"
+            )}
+          >
+            <BookOpen className="w-4 h-4" />
+            Standart
+          </button>
+          <button
+            onClick={() => setSelectedMode("suddenDeath")}
+            className={cn(
+              "flex items-center gap-1.5 px-4 py-2.5 rounded-lg border-2 text-sm font-bold transition-all",
+              selectedMode === "suddenDeath"
+                ? "border-foreground bg-foreground text-background"
+                : "border-border bg-background text-foreground hover:bg-muted"
+            )}
+          >
+            <Zap className="w-4 h-4" />
+            Zamana Karşı
+          </button>
+        </div>
+
+        {selectedMode === "suddenDeath" && (
+          <p className="text-xs text-muted-foreground text-center max-w-xs">
+            10 dakikan var! Her doğru kelime +30 saniye kazandırır. Süre bitince oyun biter.
+          </p>
+        )}
+
         <button
-          onClick={game.startGame}
+          onClick={() => game.startGame(selectedMode)}
           className="px-8 py-3 rounded-full bg-foreground text-background text-sm font-bold tracking-wide hover:opacity-90 transition-opacity"
         >
           Oyuna Başla
@@ -88,10 +132,11 @@ const Index = () => {
   }
 
   if (game.gameOver) {
+    const isSuddenDeath = game.gameMode === "suddenDeath";
     const allSolved = game.results.every((r) => r.solved);
     const totalAttempts = game.results.reduce((s, r) => s + r.attempts, 0);
-    const timeStr = formatTime(game.elapsedSeconds);
-    const achievement = getAchievement(game.elapsedSeconds);
+    const timeStr = isSuddenDeath ? formatTime(0) : formatTime(game.elapsedSeconds);
+    const achievement = !isSuddenDeath ? getAchievement(game.elapsedSeconds) : null;
 
     const emojiGrid = game.results
       .map((r) => {
@@ -100,8 +145,10 @@ const Index = () => {
       })
       .join("\n");
 
-    const shareText = allSolved
-      ? `Wordle TR'de ${achievement.emoji} ${achievement.title} oldum! Bütün kelimeleri ${timeStr}'de bildim. Hadi gel, beni geç! 🚀\n\n${emojiGrid}`
+    const shareText = isSuddenDeath
+      ? `Zamana Karşı modunda ${game.totalWordsGuessed} kelime bildim! 🔥 En yüksek seviye: ${game.highestLevel} harf 🚀\n\n${emojiGrid}`
+      : allSolved
+      ? `Wordle TR'de ${achievement?.emoji} ${achievement?.title} oldum! Bütün kelimeleri ${formatTime(game.elapsedSeconds)}'de bildim. Hadi gel, beni geç! 🚀\n\n${emojiGrid}`
       : `Türkçe Wordle'da ${game.results.filter((r) => r.solved).length}/${game.results.length} seviye tamamladım! 🧩\n\n${emojiGrid}`;
 
     const encodedText = encodeURIComponent(shareText);
@@ -110,32 +157,43 @@ const Index = () => {
     return (
       <div className="flex h-[100dvh] flex-col items-center justify-between bg-background px-4 py-4">
         <div className="flex-1 flex flex-col items-center justify-center gap-2 w-full max-w-xs">
-          <h1 className="text-2xl font-bold text-foreground">{allSolved ? "🎉 Tebrikler!" : "😞 Oyun Bitti"}</h1>
+          <h1 className="text-2xl font-bold text-foreground">
+            {isSuddenDeath ? "⏱️ Süre Doldu!" : allSolved ? "🎉 Tebrikler!" : "😞 Oyun Bitti"}
+          </h1>
 
-          {allSolved && (
-            <motion.div
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.3 }}
-              className="flex flex-col items-center gap-0.5"
-            >
-              <span className="text-3xl">{achievement.emoji}</span>
-              <h2 className="text-xl font-extrabold tracking-tight text-foreground">{achievement.title}</h2>
-              <p className="text-[11px] text-muted-foreground text-center italic">{achievement.desc}</p>
-            </motion.div>
+          {isSuddenDeath ? (
+            <div className="flex flex-col items-center gap-1">
+              <p className="text-lg font-extrabold text-foreground">{game.totalWordsGuessed} Kelime</p>
+              <p className="text-xs text-muted-foreground">En yüksek seviye: {game.highestLevel} harf</p>
+            </div>
+          ) : (
+            <>
+              {allSolved && achievement && (
+                <motion.div
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.3 }}
+                  className="flex flex-col items-center gap-0.5"
+                >
+                  <span className="text-3xl">{achievement.emoji}</span>
+                  <h2 className="text-xl font-extrabold tracking-tight text-foreground">{achievement.title}</h2>
+                  <p className="text-[11px] text-muted-foreground text-center italic">{achievement.desc}</p>
+                </motion.div>
+              )}
+              {!allSolved && (
+                <p className="text-xs text-muted-foreground text-center">
+                  Doğru kelime: {game.targetWord}
+                </p>
+              )}
+              <p className="text-sm font-medium text-foreground flex items-center gap-1">
+                <Timer className="w-4 h-4" /> {formatTime(game.elapsedSeconds)}
+              </p>
+            </>
           )}
 
-          {!allSolved && (
-            <p className="text-xs text-muted-foreground text-center">
-              Doğru kelime: {game.targetWord}
-            </p>
-          )}
-          <p className="text-sm font-medium text-foreground flex items-center gap-1">
-            <Timer className="w-4 h-4" /> {timeStr}
-          </p>
           <div className="flex flex-col gap-0.5 w-full">
-            {game.results.map((r) => (
-              <div key={r.level} className="flex justify-between border-b border-border py-0.5 text-xs font-medium text-foreground">
+            {game.results.map((r, i) => (
+              <div key={`${r.level}-${i}`} className="flex justify-between border-b border-border py-0.5 text-xs font-medium text-foreground">
                 <span>{r.level} Harf</span>
                 <span>{r.solved ? `${r.attempts} tahmin` : "Başarısız"}</span>
               </div>
@@ -191,6 +249,10 @@ const Index = () => {
     );
   }
 
+  const isSuddenDeath = game.gameMode === "suddenDeath";
+  const timerDisplay = isSuddenDeath ? formatTime(game.remainingSeconds) : formatTime(game.elapsedSeconds);
+  const timerUrgent = isSuddenDeath && game.remainingSeconds <= 60;
+
   return (
     <div className="flex h-[100dvh] flex-col items-center bg-background px-1 py-0 overflow-hidden">
       {/* Header */}
@@ -199,6 +261,7 @@ const Index = () => {
           <h1 className="text-base sm:text-lg font-bold tracking-tight text-foreground leading-tight">Türkçe Wordle</h1>
           <div className="flex items-center gap-1.5">
             <span className="text-[10px] font-medium text-muted-foreground">
+              {isSuddenDeath && <Zap className="w-3 h-3 inline mr-0.5" />}
               Seviye {game.currentLevelIndex + 1} — {game.wordLength} Harf
             </span>
             <div className="flex gap-1">
@@ -235,9 +298,17 @@ const Index = () => {
                 : "Joker Bitti"}
             </button>
           )}
-          <span className="text-xs font-mono font-semibold text-muted-foreground flex items-center gap-0.5">
+          {isSuddenDeath && (
+            <span className="text-[10px] font-bold text-muted-foreground">
+              +{game.totalWordsGuessed}
+            </span>
+          )}
+          <span className={cn(
+            "text-xs font-mono font-semibold flex items-center gap-0.5",
+            timerUrgent ? "text-destructive animate-pulse" : "text-muted-foreground"
+          )}>
             <Timer className="w-3 h-3" />
-            {formatTime(game.elapsedSeconds)}
+            {timerDisplay}
           </span>
           <button
             onClick={toggleColorBlind}
@@ -252,11 +323,6 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Invalid word message */}
-      {game.invalidWord && (
-        <p className="text-[10px] text-destructive font-medium">Geçersiz kelime!</p>
-      )}
-
       {/* Grid */}
       <div className="flex-1 flex items-center justify-center min-h-0">
         <WordGrid
@@ -266,6 +332,7 @@ const Index = () => {
           maxAttempts={game.maxAttempts}
           shake={game.shake}
           bounceRow={game.bounceRow}
+          flipRow={game.flipRow}
           revealedIndices={game.revealedIndices}
           targetWord={game.targetWord}
           colorBlind={colorBlind}
