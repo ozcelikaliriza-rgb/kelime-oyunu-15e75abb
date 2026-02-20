@@ -49,6 +49,8 @@ export function useWordle() {
   const [remainingSeconds, setRemainingSeconds] = useState(SUDDEN_DEATH_START);
   const [totalWordsGuessed, setTotalWordsGuessed] = useState(0);
   const [highestLevel, setHighestLevel] = useState(0);
+  const [lastFailedWord, setLastFailedWord] = useState("");
+  const [showingFailedWord, setShowingFailedWord] = useState(false);
 
   const wordLength = LEVELS[currentLevelIndex];
 
@@ -84,6 +86,7 @@ export function useWordle() {
         if (s <= 1) {
           clearInterval(interval);
           setTimerRunning(false);
+          setLastFailedWord((prev) => prev || targetWord);
           setGameOver(true);
           return 0;
         }
@@ -199,10 +202,22 @@ export function useWordle() {
     } else if (newGuesses.length >= MAX_ATTEMPTS) {
       setResults((r) => [...r, { level: wordLength, attempts: MAX_ATTEMPTS, solved: false }]);
       if (gameMode === "suddenDeath") {
-        // In sudden death, failing a word = game over
-        setTimerRunning(false);
-        setTimeout(() => setGameOver(true), 800);
+        // Show the failed word for 2s, then skip to a new word of same length
+        setLastFailedWord(targetWord);
+        setShowingFailedWord(true);
+        setTimeout(() => {
+          setShowingFailedWord(false);
+          // Pick a new word of same length and continue
+          const newWord = pickWord(currentLevelIndex);
+          setTargetWord(newWord);
+          setGuesses([]);
+          setCurrentGuess("");
+          setLetterStates({});
+          setRevealedIndices(new Set());
+          setHintsRemaining(HINTS_PER_LEVEL[wordLength] || 0);
+        }, 2000);
       } else {
+        setLastFailedWord(targetWord);
         setTimerRunning(false);
         setTimeout(() => setGameOver(true), 800);
       }
@@ -240,6 +255,8 @@ export function useWordle() {
     setBounceRow(null);
     setGameStarted(false);
     setTimerRunning(false);
+    setLastFailedWord("");
+    setShowingFailedWord(false);
   }, [pickWord]);
 
   const useHint = useCallback(() => {
@@ -299,6 +316,8 @@ export function useWordle() {
     highestLevel,
     hintsRemaining,
     revealedIndices,
+    lastFailedWord,
+    showingFailedWord,
     addLetter,
     removeLetter,
     submitGuess,
