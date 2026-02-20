@@ -149,7 +149,7 @@ const Index = () => {
           <div className="flex items-center gap-2 mt-2">
             <span className="text-xs text-muted-foreground flex items-center gap-1"><Share2 className="w-3 h-3" /> Paylaş:</span>
             <a
-              href={`https://api.whatsapp.com/send?text=${encodedText}%20${shareUrl}`}
+              href={`https://wa.me/?text=${encodedText}%20${shareUrl}`}
               target="_blank"
               rel="noopener noreferrer"
               className="px-3 py-1.5 rounded-full bg-[hsl(142,71%,45%)] text-white text-[10px] font-bold hover:opacity-90 transition-opacity"
