@@ -5,10 +5,22 @@ import WordGrid from "@/components/WordGrid";
 import Keyboard from "@/components/Keyboard";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Lightbulb, Timer, Eye, Share2 } from "lucide-react";
+import { motion } from "framer-motion";
+
 const formatTime = (s: number) => {
   const m = Math.floor(s / 60);
   const sec = s % 60;
   return `${m}:${sec.toString().padStart(2, "0")}`;
+};
+
+const getAchievement = (seconds: number) => {
+  if (seconds < 90) return { title: "Işık Hızı", emoji: "⚡", desc: "Gözlerini bile kırpmadan bitirdin!" };
+  if (seconds < 150) return { title: "Kelime Profesörü", emoji: "🧠", desc: "Sözlükler seni kıskanıyor!" };
+  if (seconds < 240) return { title: "Dil Bilimci", emoji: "🧐", desc: "Her harf senin için bir oyuncak." };
+  if (seconds < 360) return { title: "Sözlük Kurdu", emoji: "🐛", desc: "Kelimelerin arasında kaybolmayı seviyorsun." };
+  if (seconds < 480) return { title: "Bulmaca Sever", emoji: "🧩", desc: "Sabırlı ve kararlı bir oyuncu!" };
+  if (seconds < 600) return { title: "Yolun Başında", emoji: "🐣", desc: "Her usta bir zamanlar çıraktı." };
+  return { title: "Keyif Adamı", emoji: "☕", desc: "Acele yok, keyifle oynuyorsun!" };
 };
 
 const Index = () => {
@@ -78,6 +90,7 @@ const Index = () => {
     const allSolved = game.results.every((r) => r.solved);
     const totalAttempts = game.results.reduce((s, r) => s + r.attempts, 0);
     const timeStr = formatTime(game.elapsedSeconds);
+    const achievement = getAchievement(game.elapsedSeconds);
 
     const emojiGrid = game.results
       .map((r) => {
@@ -87,7 +100,7 @@ const Index = () => {
       .join("\n");
 
     const shareText = allSolved
-      ? `Türkçe Wordle'da 4-8 harfli tüm seviyeleri ${timeStr}'de tamamladım! Beni geçebilir misin? 🧩🚀\n\n${emojiGrid}`
+      ? `Wordle TR'de ${achievement.emoji} ${achievement.title} oldum! Bütün kelimeleri ${timeStr}'de bildim. Hadi gel, beni geç! 🚀\n\n${emojiGrid}`
       : `Türkçe Wordle'da ${game.results.filter((r) => r.solved).length}/${game.results.length} seviye tamamladım! 🧩\n\n${emojiGrid}`;
 
     const encodedText = encodeURIComponent(shareText);
@@ -97,9 +110,25 @@ const Index = () => {
       <div className="flex h-[100dvh] flex-col items-center justify-between bg-background px-4 py-4">
         <div className="flex-1 flex flex-col items-center justify-center gap-2 w-full max-w-xs">
           <h1 className="text-2xl font-bold text-foreground">{allSolved ? "🎉 Tebrikler!" : "😞 Oyun Bitti"}</h1>
-          <p className="text-xs text-muted-foreground text-center">
-            {allSolved ? "Tüm seviyeleri tamamladın!" : `Doğru kelime: ${game.targetWord}`}
-          </p>
+
+          {allSolved && (
+            <motion.div
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.3 }}
+              className="flex flex-col items-center gap-0.5"
+            >
+              <span className="text-3xl">{achievement.emoji}</span>
+              <h2 className="text-xl font-extrabold tracking-tight text-foreground">{achievement.title}</h2>
+              <p className="text-[11px] text-muted-foreground text-center italic">{achievement.desc}</p>
+            </motion.div>
+          )}
+
+          {!allSolved && (
+            <p className="text-xs text-muted-foreground text-center">
+              Doğru kelime: {game.targetWord}
+            </p>
+          )}
           <p className="text-sm font-medium text-foreground flex items-center gap-1">
             <Timer className="w-4 h-4" /> {timeStr}
           </p>
