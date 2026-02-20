@@ -6,6 +6,7 @@ import WordGrid from "@/components/WordGrid";
 import Keyboard from "@/components/Keyboard";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Lightbulb, Timer, Eye, Share2, Zap, BookOpen, Trophy } from "lucide-react";
+
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
@@ -15,15 +16,6 @@ const formatTime = (s: number) => {
   return `${m}:${sec.toString().padStart(2, "0")}`;
 };
 
-const getAchievement = (seconds: number) => {
-  if (seconds < 90) return { title: "Işık Hızı", emoji: "⚡", desc: "Gözlerini bile kırpmadan bitirdin!" };
-  if (seconds < 150) return { title: "Kelime Profesörü", emoji: "🧠", desc: "Sözlükler seni kıskanıyor!" };
-  if (seconds < 240) return { title: "Dil Bilimci", emoji: "🧐", desc: "Her harf senin için bir oyuncak." };
-  if (seconds < 360) return { title: "Sözlük Kurdu", emoji: "🐛", desc: "Kelimelerin arasında kaybolmayı seviyorsun." };
-  if (seconds < 480) return { title: "Bulmaca Sever", emoji: "🧩", desc: "Sabırlı ve kararlı bir oyuncu!" };
-  if (seconds < 600) return { title: "Yolun Başında", emoji: "🐣", desc: "Her usta bir zamanlar çıraktı." };
-  return { title: "Keyif Adamı", emoji: "☕", desc: "Acele yok, keyifle oynuyorsun!" };
-};
 
 const Index = () => {
   const game = useWordle();
@@ -178,7 +170,6 @@ const Index = () => {
     const isSuddenDeath = game.gameMode === "suddenDeath";
     const allSolved = game.results.every((r) => r.solved);
     const totalAttempts = game.results.reduce((s, r) => s + r.attempts, 0);
-    const achievement = getAchievement(isSuddenDeath ? 150 : game.elapsedSeconds);
     const showFailedWord = isSuddenDeath ? game.lastFailedWord : (!allSolved ? game.targetWord : null);
 
     const emojiGrid = game.results
@@ -188,11 +179,10 @@ const Index = () => {
       })
       .join("\n");
 
+    const solvedCount = game.results.filter((r) => r.solved).length;
     const shareText = isSuddenDeath
-      ? `Zamana Karşı modunda ${game.totalWordsGuessed} kelime bildim! ${achievement.emoji} ${achievement.title} 🔥\n\n${emojiGrid}`
-      : allSolved
-      ? `Wordle TR'de ${achievement.emoji} ${achievement.title} oldum! Bütün kelimeleri ${formatTime(game.elapsedSeconds)}'de bildim. Hadi gel, beni geç! 🚀\n\n${emojiGrid}`
-      : `Türkçe Wordle'da ${game.results.filter((r) => r.solved).length}/${game.results.length} seviye tamamladım! 🧩\n\n${emojiGrid}`;
+      ? `Wordle TR'de ${formatTime(game.elapsedSeconds)} sürede ${game.totalWordsGuessed} kelime bildim! Sen de dene:\n\n${emojiGrid}`
+      : `Wordle TR'de ${formatTime(game.elapsedSeconds)} sürede ${solvedCount} kelime bildim! Sen de dene:\n\n${emojiGrid}`;
 
     const encodedText = encodeURIComponent(shareText);
     const shareUrl = encodeURIComponent(window.location.href);
@@ -220,17 +210,6 @@ const Index = () => {
               </div>
             )}
 
-            {/* Achievement */}
-            <motion.div
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.3 }}
-              className="flex flex-col items-center gap-0.5"
-            >
-              <span className="text-3xl">{achievement.emoji}</span>
-              <h2 className="text-xl font-extrabold tracking-tight text-foreground">{achievement.title}</h2>
-              <p className="text-[11px] text-muted-foreground text-center italic">{achievement.desc}</p>
-            </motion.div>
 
             {/* Stats */}
             <div className="flex items-center gap-3">
