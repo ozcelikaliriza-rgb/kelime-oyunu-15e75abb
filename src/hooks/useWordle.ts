@@ -86,7 +86,7 @@ export function useWordle() {
         if (s <= 1) {
           clearInterval(interval);
           setTimerRunning(false);
-          setLastFailedWord((prev) => prev || targetWord);
+          setLastFailedWord(targetWord);
           setGameOver(true);
           return 0;
         }
@@ -94,7 +94,7 @@ export function useWordle() {
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [timerRunning, gameMode]);
+  }, [timerRunning, gameMode, targetWord]);
 
   const pickWord = useCallback(
     (levelIdx: number) => {
