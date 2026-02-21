@@ -5,7 +5,7 @@ import { useThemeContext } from "@/contexts/ThemeContext";
 import WordGrid from "@/components/WordGrid";
 import Keyboard from "@/components/Keyboard";
 import ThemeToggle from "@/components/ThemeToggle";
-import { Lightbulb, Timer, Eye, Share2, Zap, BookOpen, Trophy } from "lucide-react";
+import { Lightbulb, Timer, Eye, Share2, Zap, BookOpen } from "lucide-react";
 
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -21,33 +21,6 @@ const Index = () => {
   const game = useWordle();
   const { mode, cycleTheme, colorBlind, toggleColorBlind } = useThemeContext();
   const [selectedMode, setSelectedMode] = useState<GameMode>("standard");
-
-  // Personal best from localStorage
-  const [bestStandard, setBestStandard] = useState<number | null>(() => {
-    const v = localStorage.getItem("wordle_best_standard");
-    return v ? Number(v) : null;
-  });
-  const [bestSuddenDeath, setBestSuddenDeath] = useState<number | null>(() => {
-    const v = localStorage.getItem("wordle_best_sudden");
-    return v ? Number(v) : null;
-  });
-
-  // Save personal bests when game ends
-  useEffect(() => {
-    if (!game.gameOver) return;
-    if (game.gameMode === "standard" && game.results.every((r) => r.solved)) {
-      if (bestStandard === null || game.elapsedSeconds < bestStandard) {
-        setBestStandard(game.elapsedSeconds);
-        localStorage.setItem("wordle_best_standard", String(game.elapsedSeconds));
-      }
-    }
-    if (game.gameMode === "suddenDeath") {
-      if (bestSuddenDeath === null || game.totalWordsGuessed > bestSuddenDeath) {
-        setBestSuddenDeath(game.totalWordsGuessed);
-        localStorage.setItem("wordle_best_sudden", String(game.totalWordsGuessed));
-      }
-    }
-  }, [game.gameOver]);
 
   // Auto-focus for immediate typing
   useEffect(() => {
@@ -120,26 +93,6 @@ const Index = () => {
             <p className="text-sm text-muted-foreground text-center max-w-xs">4'ten 8'e kadar harfli kelimeleri tahmin et!</p>
           </div>
 
-          {/* Personal Best */}
-          {bestStandard !== null || bestSuddenDeath !== null ? (
-            <div className="flex flex-col items-center gap-1 border border-border rounded-xl px-6 py-3 bg-card">
-              <span className="text-xs font-bold text-muted-foreground flex items-center gap-1"><Trophy className="w-3 h-3" /> Kişisel Rekor</span>
-              <div className="flex gap-4 text-center">
-                {bestStandard !== null && (
-                  <div>
-                    <p className="text-lg font-extrabold text-foreground">{formatTime(bestStandard)}</p>
-                    <p className="text-[10px] text-muted-foreground">Standart</p>
-                  </div>
-                )}
-                {bestSuddenDeath !== null && (
-                  <div>
-                    <p className="text-lg font-extrabold text-foreground">{bestSuddenDeath}</p>
-                    <p className="text-[10px] text-muted-foreground">Kelime (ZK)</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : null}
 
           {/* Mode selector — large buttons */}
           <div className="flex flex-col gap-3 w-full max-w-xs">
@@ -169,8 +122,10 @@ const Index = () => {
   if (game.gameOver) {
     const isSuddenDeath = game.gameMode === "suddenDeath";
     const allSolved = game.results.every((r) => r.solved);
-    const totalAttempts = game.results.reduce((s, r) => s + r.attempts, 0);
-    const showFailedWord = isSuddenDeath ? game.lastFailedWord : (!allSolved ? game.targetWord : null);
+    
+    const showFailedWord = isSuddenDeath
+      ? (game.lastFailedWord || game.targetWord)
+      : (!allSolved ? game.targetWord : null);
 
     const emojiGrid = game.results
       .map((r) => {
@@ -223,19 +178,12 @@ const Index = () => {
               )}
             </div>
 
-            {/* Results breakdown */}
-            <div className="flex flex-col gap-0.5 w-full">
-              {game.results.map((r, i) => (
-                <div key={`${r.level}-${i}`} className="flex justify-between border-b border-border py-0.5 text-xs font-medium text-foreground">
-                  <span>{r.level} Harf</span>
-                  <span>{r.solved ? `${r.attempts} tahmin` : "Başarısız"}</span>
-                </div>
-              ))}
-              <div className="flex justify-between pt-1 text-sm font-bold text-foreground">
-                <span>Toplam</span>
-                <span>{totalAttempts} tahmin</span>
-              </div>
-            </div>
+            {/* Stats summary */}
+            {!isSuddenDeath && (
+              <p className="text-xs text-muted-foreground">
+                {solvedCount}/{game.results.length} seviye tamamlandı
+              </p>
+            )}
 
             {/* Share buttons */}
             <div className="flex items-center gap-2 mt-2">
