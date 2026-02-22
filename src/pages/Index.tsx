@@ -225,11 +225,12 @@ const Index = () => {
           {/* Gerçekçi Reklam Denemesi */}
           <div className="w-full flex justify-center mt-6">
             <div
-              className="w-[320px] h-[50px] bg-secondary/50 border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center cursor-help transition-all hover:bg-secondary"
-              title="Bu bir reklam deneme alanıdır"
+              className="w-[320px] h-[50px] bg-secondary/50 border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all hover:bg-secondary hover:scale-105 active:scale-95"
+              title="Bana bir kahve ısmarlamak ister misin?"
+              onClick={() => window.open("https://buymeacoffee.com/kullaniciadin", "_blank")}
             >
-              <span className="text-[9px] uppercase tracking-widest text-muted-foreground mb-1">REKLAM</span>
-              <div className="text-sm font-medium text-foreground/70">320 x 50 Banner</div>
+              <span className="text-[9px] uppercase tracking-widest text-muted-foreground mb-1">DESTEK OL</span>
+              <div className="text-sm font-medium text-foreground/70">☕ Bir Kahve Ismarla</div>
             </div>
           </div>
         </motion.div>
