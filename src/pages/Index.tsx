@@ -26,7 +26,6 @@ const Index = () => {
     window.focus();
   }, [game.currentLevelIndex]);
 
-
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
@@ -223,9 +222,15 @@ const Index = () => {
             </button>
           </div>
 
-          {/* Ad placeholder */}
-          <div className="w-full max-w-lg border border-border rounded-md py-2 mt-3 flex items-center justify-center">
-            <span className="text-[10px] text-muted-foreground tracking-wide">Advertisement Area</span>
+          {/* Gerçekçi Reklam Denemesi */}
+          <div className="w-full flex justify-center mt-6">
+            <div
+              className="w-[320px] h-[50px] bg-secondary/50 border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center cursor-help transition-all hover:bg-secondary"
+              title="Bu bir reklam deneme alanıdır"
+            >
+              <span className="text-[9px] uppercase tracking-widest text-muted-foreground mb-1">REKLAM</span>
+              <div className="text-sm font-medium text-foreground/70">320 x 50 Banner</div>
+            </div>
           </div>
         </motion.div>
       </AnimatePresence>
