@@ -16,7 +16,6 @@ const formatTime = (s: number) => {
   return `${m}:${sec.toString().padStart(2, "0")}`;
 };
 
-
 const Index = () => {
   const game = useWordle();
   const { mode, cycleTheme, colorBlind, toggleColorBlind } = useThemeContext();
@@ -80,7 +79,9 @@ const Index = () => {
               onClick={toggleColorBlind}
               title="Renk körlüğü modu"
               className={`flex items-center justify-center w-7 h-7 rounded-md border transition-colors ${
-                colorBlind ? "bg-foreground text-background border-foreground" : "bg-secondary text-secondary-foreground border-border hover:bg-muted"
+                colorBlind
+                  ? "bg-foreground text-background border-foreground"
+                  : "bg-secondary text-secondary-foreground border-border hover:bg-muted"
               }`}
             >
               <Eye className="w-4 h-4" />
@@ -89,22 +90,29 @@ const Index = () => {
           </div>
 
           <div className="flex flex-col items-center gap-2">
-            <h1 className="text-4xl font-extrabold tracking-tight text-foreground">Türkçe Wordle</h1>
-            <p className="text-sm text-muted-foreground text-center max-w-xs">4'ten 8'e kadar harfli kelimeleri tahmin et!</p>
+            <h1 className="text-4xl font-extrabold tracking-tight text-foreground">KelimeBul</h1>
+            <p className="text-sm text-muted-foreground text-center max-w-xs">
+              4'ten 8'e kadar harfli kelimeleri tahmin et!
+            </p>
           </div>
-
 
           {/* Mode selector — large buttons */}
           <div className="flex flex-col gap-3 w-full max-w-xs">
             <button
-              onClick={() => { setSelectedMode("standard"); game.startGame("standard"); }}
+              onClick={() => {
+                setSelectedMode("standard");
+                game.startGame("standard");
+              }}
               className="flex items-center justify-center gap-2 w-full py-4 rounded-xl border-2 border-foreground bg-foreground text-background text-sm font-bold tracking-wide hover:opacity-90 transition-opacity"
             >
               <BookOpen className="w-5 h-5" />
               Standart Mod
             </button>
             <button
-              onClick={() => { setSelectedMode("suddenDeath"); game.startGame("suddenDeath"); }}
+              onClick={() => {
+                setSelectedMode("suddenDeath");
+                game.startGame("suddenDeath");
+              }}
               className="flex items-center justify-center gap-2 w-full py-4 rounded-xl border-2 border-border bg-background text-foreground text-sm font-bold tracking-wide hover:bg-muted transition-colors"
             >
               <Zap className="w-5 h-5" />
@@ -122,10 +130,8 @@ const Index = () => {
   if (game.gameOver) {
     const isSuddenDeath = game.gameMode === "suddenDeath";
     const allSolved = game.results.every((r) => r.solved);
-    
-    const showFailedWord = isSuddenDeath
-      ? (game.lastFailedWord || game.targetWord)
-      : (!allSolved ? game.targetWord : null);
+
+    const showFailedWord = isSuddenDeath ? game.lastFailedWord || game.targetWord : !allSolved ? game.targetWord : null;
 
     const emojiGrid = game.results
       .map((r) => {
@@ -165,7 +171,6 @@ const Index = () => {
               </div>
             )}
 
-
             {/* Stats */}
             <div className="flex items-center gap-3">
               <p className="text-sm font-medium text-foreground flex items-center gap-1">
@@ -187,7 +192,9 @@ const Index = () => {
 
             {/* Share buttons */}
             <div className="flex items-center gap-2 mt-2">
-              <span className="text-xs text-muted-foreground flex items-center gap-1"><Share2 className="w-3 h-3" /> Paylaş:</span>
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <Share2 className="w-3 h-3" /> Paylaş:
+              </span>
               <a
                 href={`https://wa.me/?text=${encodedText}%20${shareUrl}`}
                 target="_blank"
@@ -254,8 +261,8 @@ const Index = () => {
                     i < game.currentLevelIndex
                       ? "bg-[hsl(var(--tile-correct))] border-[hsl(var(--tile-correct))]"
                       : i === game.currentLevelIndex
-                      ? "bg-foreground border-foreground"
-                      : "bg-background border-border"
+                        ? "bg-foreground border-foreground"
+                        : "bg-background border-border"
                   }`}
                 />
               ))}
@@ -271,24 +278,22 @@ const Index = () => {
                 "flex items-center gap-0.5 px-2 py-1 rounded text-[10px] font-bold border transition-colors",
                 game.hintsRemaining > 0
                   ? "bg-accent text-accent-foreground border-border hover:bg-muted cursor-pointer"
-                  : "bg-muted text-muted-foreground border-border cursor-not-allowed opacity-50"
+                  : "bg-muted text-muted-foreground border-border cursor-not-allowed opacity-50",
               )}
             >
               <Lightbulb className="w-3 h-3" />
-              {game.hintsRemaining > 0
-                ? `${game.hintsRemaining} Joker`
-                : "Joker Bitti"}
+              {game.hintsRemaining > 0 ? `${game.hintsRemaining} Joker` : "Joker Bitti"}
             </button>
           )}
           {isSuddenDeath && (
-            <span className="text-[10px] font-bold text-muted-foreground">
-              +{game.totalWordsGuessed}
-            </span>
+            <span className="text-[10px] font-bold text-muted-foreground">+{game.totalWordsGuessed}</span>
           )}
-          <span className={cn(
-            "text-xs font-mono font-semibold flex items-center gap-0.5",
-            timerUrgent ? "text-destructive animate-pulse" : "text-muted-foreground"
-          )}>
+          <span
+            className={cn(
+              "text-xs font-mono font-semibold flex items-center gap-0.5",
+              timerUrgent ? "text-destructive animate-pulse" : "text-muted-foreground",
+            )}
+          >
             <Timer className="w-3 h-3" />
             {timerDisplay}
           </span>
@@ -296,7 +301,9 @@ const Index = () => {
             onClick={toggleColorBlind}
             title="Renk körlüğü modu"
             className={`flex items-center justify-center w-6 h-6 rounded border transition-colors ${
-              colorBlind ? "bg-foreground text-background border-foreground" : "bg-secondary text-secondary-foreground border-border hover:bg-muted"
+              colorBlind
+                ? "bg-foreground text-background border-foreground"
+                : "bg-secondary text-secondary-foreground border-border hover:bg-muted"
             }`}
           >
             <Eye className="w-3 h-3" />
