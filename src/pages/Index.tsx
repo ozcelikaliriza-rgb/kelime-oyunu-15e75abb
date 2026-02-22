@@ -92,7 +92,7 @@ const Index = () => {
           <div className="flex flex-col items-center gap-2">
             <h1 className="text-4xl font-extrabold tracking-tight text-foreground">KelimeBul</h1>
             <p className="text-sm text-muted-foreground text-center max-w-xs">
-              4'ten 8'e kadar harfli kelimeleri tahmin et!
+              4 ile 8 harf arasındaki kelimeleri tahmin et!
             </p>
           </div>
 
