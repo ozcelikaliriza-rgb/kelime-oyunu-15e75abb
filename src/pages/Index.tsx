@@ -353,8 +353,15 @@ const Index = () => {
       </div>
 
       {/* Ad placeholder */}
-      <div className="w-full max-w-lg border border-border rounded-md py-1.5 mb-1 flex items-center justify-center shrink-0">
-        <span className="text-[10px] text-muted-foreground tracking-wide">Advertisement Area</span>
+      {/* Eski "Advertisement Area" yazan yeri SİLİP yerine bunu koyduğuna emin ol: */}
+      <div className="w-full flex justify-center mt-6">
+        <div
+          className="w-[320px] h-[50px] bg-secondary/50 border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all hover:bg-secondary"
+          onClick={() => window.open("https://twitter.com/hesabiniz", "_blank")}
+        >
+          <span className="text-[9px] uppercase tracking-widest text-muted-foreground mb-1">DESTEK OL</span>
+          <div className="text-sm font-medium text-foreground/70">☕ Bir Kahve Ismarla</div>
+        </div>
       </div>
     </div>
   );
