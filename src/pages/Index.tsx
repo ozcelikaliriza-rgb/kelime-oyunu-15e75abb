@@ -26,12 +26,6 @@ const Index = () => {
     window.focus();
   }, [game.currentLevelIndex]);
 
-  // Show toast for invalid word
-  useEffect(() => {
-    if (game.invalidWord) {
-      toast("Sözlükte bulunamadı", { duration: 1500 });
-    }
-  }, [game.invalidWord]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
