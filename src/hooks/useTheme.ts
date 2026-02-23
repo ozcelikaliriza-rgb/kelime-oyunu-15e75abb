@@ -23,8 +23,12 @@ export function useTheme() {
   }, []);
 
   const cycleTheme = useCallback(() => {
-    setTheme(mode === "light" ? "dark" : "light");
-  }, [mode, setTheme]);
+    setMode((prev) => {
+      const next = prev === "light" ? "dark" : "light";
+      localStorage.setItem(STORAGE_KEY, next);
+      return next;
+    });
+  }, []);
 
   return { mode, resolvedTheme: mode, setTheme, cycleTheme };
 }
