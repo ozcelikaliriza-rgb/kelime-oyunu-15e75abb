@@ -14,8 +14,11 @@ const CB_DARK: Record<string, string> = {
 };
 
 function applyCbVars(enabled: boolean) {
+  if (typeof window === "undefined") return; // SSR/Build güvenliği
+  
   const root = document.documentElement;
   const isDark = root.classList.contains("dark");
+  
   if (enabled) {
     root.classList.add("colorblind");
     const vars = isDark ? CB_DARK : CB_LIGHT;
@@ -28,36 +31,38 @@ function applyCbVars(enabled: boolean) {
   }
 }
 
-// Module-level ref to avoid changing hook count
-let _cbState = false;
-
 export function useAccessibility() {
   const [colorBlind, setColorBlind] = useState(() => {
+    if (typeof window === "undefined") return false;
     return localStorage.getItem(STORAGE_KEY) === "true";
   });
 
-  _cbState = colorBlind;
-
-  // Apply on mount and whenever colorBlind changes
+  // Ayarları uygula ve kaydet
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, String(colorBlind));
     applyCbVars(colorBlind);
   }, [colorBlind]);
 
-  // Re-apply whenever the dark class changes (theme toggle)
+  // Donmayı engellemek için MutationObserver yerine daha basit bir yöntem
+  // Tema değiştiğinde renkleri güncellemek için sınıf değişikliğini dinler
   useEffect(() => {
-    const observer = new MutationObserver(() => {
-      applyCbVars(_cbState);
+    const handleThemeChange = () => applyCbVars(colorBlind);
+    
+    // MutationObserver donma yapabildiği için sadece tema değişince tetiklenecek bir mekanizma
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === "class") {
+          handleThemeChange();
+        }
+      });
     });
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class"],
-    });
+
+    observer.observe(document.documentElement, { attributes: true });
     return () => observer.disconnect();
-  }, []);
+  }, [colorBlind]); // Bağımlılığa colorBlind ekledik ki güncel kalsın
 
   const toggleColorBlind = useCallback(() => {
-    setColorBlind((v) => !v);
+    setColorBlind((prev) => !prev);
   }, []);
 
   return { colorBlind, toggleColorBlind };
