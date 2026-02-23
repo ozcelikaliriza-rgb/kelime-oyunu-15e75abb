@@ -176,7 +176,6 @@ const Index = () => {
               )}
             </div>
 
-
             {/* Share buttons */}
             <div className="flex items-center gap-2 mt-2">
               <span className="text-xs text-muted-foreground flex items-center gap-1">
@@ -216,7 +215,7 @@ const Index = () => {
             </button>
           </div>
 
-          {/* Eski "Advertisement Area" yazan yeri SİLİP yerine bunu koyduğuna emin ol: */}
+          {/* Eski "Advertisement Area" yazan yeri SİLİP yerine bunu koyduğuna emin ol: 
           <div className="w-full flex justify-center mt-6">
             <div
               className="w-[320px] h-[50px] bg-secondary/50 border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all hover:bg-secondary"
@@ -225,7 +224,7 @@ const Index = () => {
               <span className="text-[9px] uppercase tracking-widest text-muted-foreground mb-1">DESTEK OL</span>
               <div className="text-sm font-medium text-foreground/70">☕ Bir Kahve Ismarla</div>
             </div>
-          </div>
+          </div> */}
         </motion.div>
       </AnimatePresence>
     );
@@ -347,7 +346,7 @@ const Index = () => {
       </div>
 
       {/* Ad placeholder */}
-      {/* Eski "Advertisement Area" yazan yeri SİLİP yerine bunu koyduğuna emin ol: */}
+      {/* Eski "Advertisement Area" yazan yeri SİLİP yerine bunu koyduğuna emin ol: 
       <div className="w-full flex justify-center mt-6">
         <div
           className="w-[320px] h-[50px] bg-secondary/50 border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all hover:bg-secondary"
@@ -356,7 +355,7 @@ const Index = () => {
           <span className="text-[9px] uppercase tracking-widest text-muted-foreground mb-1">DESTEK OL</span>
           <div className="text-sm font-medium text-foreground/70">☕ Bir Kahve Ismarla</div>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };
