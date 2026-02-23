@@ -36,22 +36,34 @@ export function useAccessibility() {
     }
   }, [colorBlind]);
 
-  // Sadece renk körü modu değişince çalışır
+  // --- BURADAN BAŞLA ---
+  // Tema değişikliğini dinlemek için en güvenli yöntem:
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, String(colorBlind));
-    applyCbVars();
-  }, [colorBlind, applyCbVars]);
+    if (!colorBlind) {
+      applyCbVars(false); // Mod kapalıysa her şeyi temizle
+      return;
+    }
 
-  // Tema değişikliğini dinlemek için Observer yerine güvenli event listener
-  useEffect(() => {
-    window.addEventListener('storage', applyCbVars); // LocalStorage değişirse güncelle
-    const timer = setInterval(applyCbVars, 1000); // Ek güvenlik: Her saniye kontrol et (donma yapmaz)
-    
-    return () => {
-      window.removeEventListener('storage', applyCbVars);
-      clearInterval(timer);
+    const handleClassChange = () => {
+       applyCbVars(true);
     };
-  }, [applyCbVars]);
+
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === "class") {
+          handleClassChange();
+        }
+      });
+    });
+
+    observer.observe(document.documentElement, { 
+      attributes: true, 
+      attributeFilter: ["class"] 
+    });
+
+    return () => observer.disconnect();
+  }, [colorBlind]); // Sadece colorBlind değişince efekti tazele
+  // --- BURADA BİTİR ---
 
   const toggleColorBlind = useCallback(() => {
     setColorBlind((prev) => !prev);
