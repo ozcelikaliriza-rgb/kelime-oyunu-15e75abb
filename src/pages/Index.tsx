@@ -6,6 +6,7 @@ import WordGrid from "@/components/WordGrid";
 import Keyboard from "@/components/Keyboard";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Lightbulb, Timer, Eye, Share2, Zap, BookOpen } from "lucide-react";
+import HowToPlayModal from "@/components/HowToPlayModal";
 
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -68,6 +69,7 @@ const Index = () => {
         >
           {/* Theme & accessibility toggles */}
           <div className="absolute top-3 right-3 flex items-center gap-1.5">
+            <HowToPlayModal />
             <button
               onClick={toggleColorBlind}
               title="Renk körlüğü modu"
@@ -289,6 +291,7 @@ const Index = () => {
             <Timer className="w-3 h-3" />
             {timerDisplay}
           </span>
+          <HowToPlayModal />
           <button
             onClick={toggleColorBlind}
             title="Renk körlüğü modu"
