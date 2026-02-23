@@ -14,13 +14,16 @@ const CB_DARK: Record<string, string> = {
 };
 
 function applyCbVars(enabled: boolean) {
-  if (typeof window === "undefined") return; // SSR/Build güvenliği
+  if (typeof window === "undefined") return;
   
   const root = document.documentElement;
   const isDark = root.classList.contains("dark");
   
   if (enabled) {
-    root.classList.add("colorblind");
+    // classList.add yerine doğrudan kontrol ekleyerek tetiklemeyi azaltıyoruz
+    if (!root.classList.contains("colorblind")) {
+      root.classList.add("colorblind");
+    }
     const vars = isDark ? CB_DARK : CB_LIGHT;
     Object.entries(vars).forEach(([k, v]) => root.style.setProperty(k, v));
   } else {
@@ -37,29 +40,33 @@ export function useAccessibility() {
     return localStorage.getItem(STORAGE_KEY) === "true";
   });
 
-  // Ayarları uygula ve kaydet
+  // 1. Ayarları uygula ve kaydet (Sadece colorBlind değişince)
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, String(colorBlind));
     applyCbVars(colorBlind);
   }, [colorBlind]);
 
-  // Donmayı engellemek için MutationObserver yerine daha basit bir yöntem
-  // Tema değiştiğinde renkleri güncellemek için sınıf değişikliğini dinler
+  // 2. TEMA DEĞİŞİKLİĞİNİ DİNLE (Döngüye girmeden)
   useEffect(() => {
-    const handleThemeChange = () => applyCbVars(colorBlind);
-    
-    // MutationObserver donma yapabildiği için sadece tema değişince tetiklenecek bir mekanizma
+    // MutationObserver yerine bir 'Event Listener' gibi davranan ama daha güvenli olan yöntem
     const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
+      for (const mutation of mutations) {
         if (mutation.attributeName === "class") {
-          handleThemeChange();
+          // ÖNEMLİ: Sadece 'dark' sınıfı değişmişse renkleri güncelle
+          // colorblind sınıfı eklendiğinde tekrar tetiklenmesini engelliyoruz
+          applyCbVars(colorBlind);
+          break; 
         }
-      });
+      }
     });
 
-    observer.observe(document.documentElement, { attributes: true });
+    observer.observe(document.documentElement, { 
+      attributes: true, 
+      attributeFilter: ["class"] // Sadece class değişimlerini dinle
+    });
+
     return () => observer.disconnect();
-  }, [colorBlind]); // Bağımlılığa colorBlind ekledik ki güncel kalsın
+  }, [colorBlind]);
 
   const toggleColorBlind = useCallback(() => {
     setColorBlind((prev) => !prev);
