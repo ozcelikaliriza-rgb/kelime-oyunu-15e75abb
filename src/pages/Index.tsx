@@ -176,12 +176,6 @@ const Index = () => {
               )}
             </div>
 
-            {/* Stats summary */}
-            {!isSuddenDeath && (
-              <p className="text-xs text-muted-foreground">
-                {solvedCount}/{game.results.length} seviye tamamlandı
-              </p>
-            )}
 
             {/* Share buttons */}
             <div className="flex items-center gap-2 mt-2">
