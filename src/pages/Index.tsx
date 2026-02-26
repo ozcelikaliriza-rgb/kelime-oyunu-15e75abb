@@ -27,21 +27,22 @@ const Index = () => {
     window.focus();
   }, [game.currentLevelIndex]);
 
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.ctrlKey || e.metaKey || e.altKey) return;
-      const raw = e.key;
-      if (raw === "Enter") game.submitGuess();
-      else if (raw === "Backspace") game.removeLetter();
-      else {
-        const key = trUpper(raw);
-        if (/^[A-ZÇĞİÖŞÜ]$/.test(key) && key.length === 1) game.addLetter(key);
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [game.submitGuess, game.removeLetter, game.addLetter]);
-
+  
+useEffect(() => {
+  const handler = (e: KeyboardEvent) => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const raw = e.key;
+    if (raw === "Enter") game.submitGuess();
+    else if (raw === "Backspace") game.removeLetter();
+    else {
+      const key = trUpper(raw);
+      if (/^[A-ZÇĞİÖŞÜ]$/.test(key) && key.length === 1) game.addLetter(key);
+    }
+  };
+  window.addEventListener("keydown", handler);
+  return () => window.removeEventListener("keydown", handler);
+}, [game.submitGuess, game.removeLetter, game.addLetter]); 
+  
   if (game.loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
