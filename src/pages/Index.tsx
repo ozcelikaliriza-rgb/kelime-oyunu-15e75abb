@@ -28,21 +28,34 @@ const Index = () => {
   }, [game.currentLevelIndex]);
 
   
-useEffect(() => {
-  const handler = (e: KeyboardEvent) => {
-    if (e.ctrlKey || e.metaKey || e.altKey) return;
-    const raw = e.key;
-    if (raw === "Enter") game.submitGuess();
-    else if (raw === "Backspace") game.removeLetter();
-    else {
-      const key = trUpper(raw);
-      if (/^[A-ZÇĞİÖŞÜ]$/.test(key) && key.length === 1) game.addLetter(key);
-    }
-  };
-  window.addEventListener("keydown", handler);
-  return () => window.removeEventListener("keydown", handler);
-}, [game.submitGuess, game.removeLetter, game.addLetter]); 
-  
+// Auto-focus for immediate typing
+  useEffect(() => {
+    window.focus();
+  }, [game.currentLevelIndex]);
+
+  // YENİ KOD BURAYA GELECEK:
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      
+      const raw = e.key;
+      if (raw === "Enter") {
+        e.preventDefault();
+        game.submitGuess();
+      } else if (raw === "Backspace") {
+        game.removeLetter();
+      } else if (raw.length === 1) {
+        const key = trUpper(raw);
+        if (/^[A-ZÇĞİÖŞÜ]$/.test(key)) {
+          game.addLetter(key);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [game.gameStarted, game.gameOver, game.currentLevelIndex]);
+
   if (game.loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
